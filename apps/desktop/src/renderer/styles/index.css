@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #14213d;
+  background:
+    radial-gradient(circle at top left, rgba(239, 71, 111, 0.22), transparent 36%),
+    radial-gradient(circle at right center, rgba(6, 214, 160, 0.18), transparent 32%),
+    linear-gradient(135deg, #f8f3e8 0%, #fffaf2 100%);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.bg-app {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(239, 71, 111, 0.18), transparent 30%),
+    radial-gradient(circle at 90% 20%, rgba(6, 214, 160, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.88));
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}

@@ -1,0 +1,20 @@
+{
+  "name": "journeyforge",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.30.0",
+  "scripts": {
+    "dev": "pnpm --filter @journeyforge/desktop dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "check-types": "turbo run check-types"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.15",
+    "@vitest/coverage-v8": "^3.2.4",
+    "tsup": "^8.5.0",
+    "turbo": "^2.5.8",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
