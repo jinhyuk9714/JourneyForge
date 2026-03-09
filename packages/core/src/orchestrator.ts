@@ -10,17 +10,22 @@ import type {
 import { buildJourneyArtifacts } from './generators';
 import { normalizeSession } from './normalizeSession';
 import { createRecorderService } from './recorder/recorderService';
+import type { RecorderServiceOptions } from './recorder/recorderService';
 import { createStorageRepository, persistSessionBundle } from './storage';
 
 type JourneyForgeAppOptions = {
   dataDir?: string;
   settings?: JourneyForgeSettings;
+  recorder?: Omit<RecorderServiceOptions, 'settings'>;
 };
 
 export const createJourneyForgeApp = (options: JourneyForgeAppOptions = {}) => {
   const settings = options.settings ?? DEFAULT_SETTINGS;
   const repository = createStorageRepository({ dataDir: options.dataDir });
-  const recorder = createRecorderService({ settings });
+  const recorder = createRecorderService({
+    settings,
+    ...options.recorder,
+  });
 
   return {
     repository,

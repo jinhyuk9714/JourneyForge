@@ -8,7 +8,7 @@ import type {
   JourneyForgeSettings,
 } from '@journeyforge/shared';
 import { chromium } from 'playwright';
-import type { Browser, BrowserContext, Page, Request } from 'playwright';
+import type { Browser, BrowserContext, LaunchOptions, Page, Request } from 'playwright';
 
 import { injectedRecorderSource } from './injectedRecorder';
 
@@ -25,8 +25,10 @@ type ActiveSession = {
   rawEvents: RawEvent[];
 };
 
-type RecorderServiceOptions = {
+export type RecorderServiceOptions = {
   settings?: JourneyForgeSettings;
+  launchOptions?: LaunchOptions;
+  onPageReady?: (page: Page) => void | Promise<void>;
 };
 
 export type RecorderService = ReturnType<typeof createRecorderService>;
@@ -115,7 +117,10 @@ export const createRecorderService = (options: RecorderServiceOptions = {}) => {
       }
 
       const sessionId = randomUUID();
-      browser = await chromium.launch({ headless: false });
+      browser = await chromium.launch({
+        headless: false,
+        ...options.launchOptions,
+      });
       context = await browser.newContext();
       await context.exposeBinding('__journeyforgeRecord', async (_source, event: RawEvent & { inputType?: string }) => {
         if (event.type === 'input') {
@@ -141,6 +146,7 @@ export const createRecorderService = (options: RecorderServiceOptions = {}) => {
 
       page = await context.newPage();
       await attachPageListeners(page);
+      await options.onPageReady?.(page);
 
       activeSession = {
         sessionId,

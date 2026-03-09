@@ -160,6 +160,15 @@ const buildActionSteps = (session: RecordedSession): StepDraft[] => {
   let previousAction: ActionEvent | undefined;
 
   for (const event of actionEvents) {
+    if (
+      event.type === 'navigation' &&
+      previousAction?.type === 'navigation' &&
+      previousAction.targetUrl === event.targetUrl &&
+      event.timestamp - previousAction.timestamp < 400
+    ) {
+      continue;
+    }
+
     if (event.type === 'input') {
       const existingIndex = pendingInputs.findIndex(
         (input) =>

@@ -5,6 +5,9 @@
   "packageManager": "pnpm@10.30.0",
   "scripts": {
     "dev": "pnpm --filter @journeyforge/desktop dev",
+    "demo-target": "node apps/demo-target/server.mjs",
+    "install:browsers": "pnpm --filter @journeyforge/core exec playwright install chromium",
+    "smoke": "pnpm --filter @journeyforge/core test:smoke",
     "build": "turbo run build",
     "test": "turbo run test",
     "check-types": "turbo run check-types"
