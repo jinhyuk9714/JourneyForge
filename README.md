@@ -107,6 +107,8 @@ pnpm build
 
 ### Keychain Credential Loop
 
+The dev-runtime keychain loop was manually validated on March 11, 2026.
+
 1. Run `pnpm dev`
 2. Open `Settings`
 3. Enter a Playwright password and click `비밀번호 저장/교체`
@@ -134,4 +136,4 @@ pnpm build
 
 ## Current Limits
 
-- OS keychain-backed credential flow is still manually validated on a developer machine
+- The packaged-app OS keychain-backed credential flow is still manually validated on a developer machine
