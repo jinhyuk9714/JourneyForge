@@ -28,6 +28,7 @@ export const SessionList = ({ sessions, selectedSessionId, onSelect }: SessionLi
             <button
               key={session.id}
               type="button"
+              data-testid={`session-row-${session.id}`}
               className={`flex w-full flex-col rounded-3xl border px-4 py-4 text-left transition ${
                 selected
                   ? 'border-ink bg-ink text-sand shadow-panel'

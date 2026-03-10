@@ -17,6 +17,10 @@ describe('desktop package manifest', () => {
     expect(packageJson.scripts?.predev).toBe(
       'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build',
     );
+    expect(packageJson.scripts?.['pretest:e2e']).toBe(
+      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node node_modules/electron/install.js',
+    );
+    expect(packageJson.scripts?.['test:e2e']).toBe('playwright test -c playwright.e2e.config.ts');
   });
 
   it('points workspace runtime packages at built dist entries for Electron execution', () => {

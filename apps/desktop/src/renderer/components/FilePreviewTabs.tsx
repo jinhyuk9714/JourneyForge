@@ -66,6 +66,7 @@ export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle, onRun }: 
           <button
             key={artifact.kind}
             type="button"
+            data-testid={`artifact-tab-${artifact.kind}`}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
               artifact.kind === activeKind ? 'bg-ink text-sand' : 'bg-sand text-ink hover:bg-ink/10'
             }`}

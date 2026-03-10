@@ -21,7 +21,7 @@ export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanel
 
   if (!belongsToSession) {
     return (
-      <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
+      <section data-testid="execution-panel" className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Execution</p>
         <h3 className="font-display text-2xl text-ink">Run generated bundles</h3>
         <p className="mt-3 text-sm text-ink/60">Select Playwright or k6 output above to run this session inside the app.</p>
@@ -32,11 +32,13 @@ export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanel
   const statusLabel = `${formatTarget(snapshot.target)} · ${snapshot.state}`;
 
   return (
-    <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
+    <section data-testid="execution-panel" className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Execution</p>
-          <h3 className="font-display text-2xl text-ink">{statusLabel}</h3>
+          <h3 data-testid="execution-status" className="font-display text-2xl text-ink">
+            {statusLabel}
+          </h3>
           <p className="mt-1 text-sm text-ink/60">
             {snapshot.bundlePath ? `Bundle: ${snapshot.bundlePath}` : 'Live stdout, stderr, and system messages stay in memory only.'}
           </p>
@@ -58,7 +60,7 @@ export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanel
         {snapshot.error ? <span className="text-ember">{snapshot.error}</span> : null}
       </div>
 
-      <div className="mt-5 rounded-3xl border border-ink/10 bg-[#101727] p-5 text-sand">
+      <div data-testid="execution-log-panel" className="mt-5 rounded-3xl border border-ink/10 bg-[#101727] p-5 text-sand">
         {snapshot.logs.length > 0 ? (
           <ul className="space-y-3 font-mono text-xs leading-6 text-sand/90">
             {snapshot.logs.map((entry) => (

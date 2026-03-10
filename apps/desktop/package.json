@@ -8,6 +8,8 @@
     "predev": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
+    "pretest:e2e": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node node_modules/electron/install.js",
+    "test:e2e": "playwright test -c playwright.e2e.config.ts",
     "test": "vitest run --passWithNoTests",
     "check-types": "tsc --noEmit -p tsconfig.json"
   },
@@ -19,6 +21,7 @@
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.52.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^24.0.15",

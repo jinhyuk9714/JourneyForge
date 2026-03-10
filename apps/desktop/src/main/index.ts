@@ -10,9 +10,10 @@ import { registerRecordingIpc } from './ipc/recording.ipc';
 import { registerSettingsIpc } from './ipc/settings.ipc';
 import { registerSessionIpc } from './ipc/session.ipc';
 import { IPC_CHANNELS } from './ipc/channels';
-import { desktopApp } from './services/journeyForgeDesktopService';
+import { createDesktopRuntime } from './services/desktopRuntimeFactory';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const desktopApp = createDesktopRuntime();
 
 const createWindow = async () => {
   const mainWindow = new BrowserWindow({
@@ -23,7 +24,7 @@ const createWindow = async () => {
     title: 'JourneyForge',
     backgroundColor: '#f8f3e8',
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
       sandbox: false,
     },
@@ -38,12 +39,12 @@ const createWindow = async () => {
 };
 
 app.whenReady().then(async () => {
-  registerRecordingIpc();
-  registerSessionIpc();
-  registerExportIpc();
-  registerSettingsIpc();
-  registerExecutionIpc();
-  registerCredentialsIpc();
+  registerRecordingIpc(desktopApp);
+  registerSessionIpc(desktopApp);
+  registerExportIpc(desktopApp);
+  registerSettingsIpc(desktopApp);
+  registerExecutionIpc(desktopApp);
+  registerCredentialsIpc(desktopApp);
   desktopApp.onExecutionUpdate((snapshot) => {
     for (const window of BrowserWindow.getAllWindows()) {
       window.webContents.send(IPC_CHANNELS.executionUpdate, snapshot);

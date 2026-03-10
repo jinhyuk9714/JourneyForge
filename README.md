@@ -24,6 +24,7 @@ pnpm install:browsers
 pnpm dev
 pnpm demo-target
 pnpm smoke
+pnpm --filter @journeyforge/desktop test:e2e
 pnpm test
 pnpm build
 ```
@@ -56,6 +57,12 @@ pnpm build
 - If Playwright browsers are not installed yet, run `pnpm install:browsers`
 - The smoke target is intentionally minimal and exists only to validate JourneyForge itself
 
+## Desktop UI Automation
+
+- `pnpm --filter @journeyforge/desktop test:e2e` launches the built Electron app with a fake runtime and verifies the shell UI end-to-end
+- Covered scenarios are `default`, `legacy`, and `cancel-execution`
+- The suite validates recording state transitions, preview rendering, explainability cards, artifact/bundle export messaging, and in-app execution logs
+
 ## Manual Validation Checklist
 
 1. Run `pnpm demo-target`
@@ -72,4 +79,4 @@ pnpm build
 
 ## Current Limits
 
-- Electron UI and in-app execution are still manually verified end-to-end; the desktop shell itself has no automated UI test suite yet
+- Real browser recording and real local Playwright/k6 toolchain execution are still manually validated on a developer machine

@@ -71,6 +71,7 @@ export const App = () => {
         {exportMessage ? (
           <button
             type="button"
+            data-testid="export-message"
             className="mb-4 rounded-2xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm text-ink"
             onClick={dismissExportMessage}
           >

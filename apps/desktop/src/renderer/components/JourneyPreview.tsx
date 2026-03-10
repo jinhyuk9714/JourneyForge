@@ -45,7 +45,10 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
               </div>
               <p className="mt-3 text-sm text-ink/70">{step.actionSummary}</p>
               {(step.explanation ?? []).length > 0 ? (
-                <div className="mt-4 rounded-3xl border border-white/70 bg-white/65 p-4">
+                <div
+                  data-testid={`journey-step-evidence-${step.id}`}
+                  className="mt-4 rounded-3xl border border-white/70 bg-white/65 p-4"
+                >
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">Why this step</p>
                   <div className="mt-3 grid gap-2">
                     {(step.explanation ?? []).map((reason) => (
@@ -71,7 +74,10 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
                 )}
               </div>
               {step.apis.some((api) => (api.explanation ?? []).length > 0) ? (
-                <div className="mt-4 rounded-3xl border border-white/70 bg-white/70 p-4">
+                <div
+                  data-testid={`journey-api-evidence-${step.id}`}
+                  className="mt-4 rounded-3xl border border-white/70 bg-white/70 p-4"
+                >
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">API evidence</p>
                   <div className="mt-3 space-y-3">
                     {step.apis.map((api) =>
@@ -120,7 +126,7 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
           </div>
 
           {k6CandidateReasons.length > 0 ? (
-            <div className="rounded-3xl border border-ink/10 bg-mint/20 px-5 py-5 text-ink">
+            <div data-testid="journey-k6-evidence" className="rounded-3xl border border-ink/10 bg-mint/20 px-5 py-5 text-ink">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">
                 Why these load-test targets
               </p>

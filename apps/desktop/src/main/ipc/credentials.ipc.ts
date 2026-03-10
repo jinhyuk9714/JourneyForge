@@ -1,9 +1,9 @@
 import { ipcMain } from 'electron';
 
 import { IPC_CHANNELS } from './channels';
-import { desktopApp } from '../services/journeyForgeDesktopService';
+import type { DesktopRuntime } from '../services/journeyForgeDesktopService';
 
-export const registerCredentialsIpc = () => {
+export const registerCredentialsIpc = (desktopApp: DesktopRuntime) => {
   ipcMain.handle(IPC_CHANNELS.credentialsSetPlaywrightPassword, async (_event, input: { value: string }) =>
     desktopApp.setPlaywrightPassword(input.value),
   );

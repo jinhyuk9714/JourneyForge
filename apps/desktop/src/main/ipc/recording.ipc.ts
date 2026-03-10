@@ -1,9 +1,9 @@
 import { ipcMain } from 'electron';
 
 import { IPC_CHANNELS } from './channels';
-import { desktopApp } from '../services/journeyForgeDesktopService';
+import type { DesktopRuntime } from '../services/journeyForgeDesktopService';
 
-export const registerRecordingIpc = () => {
+export const registerRecordingIpc = (desktopApp: DesktopRuntime) => {
   ipcMain.handle(IPC_CHANNELS.recordingStart, async (_event, input: { baseUrl: string }) =>
     desktopApp.startRecording(input),
   );
