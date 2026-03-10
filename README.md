@@ -31,6 +31,8 @@ pnpm build
 - Single Chromium recording session at a time
 - JSON-first local persistence under `data/`
 - One recording session produces one normalized journey
+- Settings live in `data/settings.json`
+- Saved settings apply to recordings that start after the save completes
 
 ## Demo Target
 
@@ -57,4 +59,3 @@ pnpm build
 ## Current Limits
 
 - Electron UI is still manually verified; this milestone does not automate the desktop shell itself
-- Settings values in the renderer are not wired into core filtering or generation yet

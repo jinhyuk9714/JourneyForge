@@ -1,9 +1,11 @@
 import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
+import { DEFAULT_SETTINGS } from '@journeyforge/shared';
 import type {
   ArtifactKind,
   GeneratedArtifact,
+  JourneyForgeSettings,
   NormalizedJourney,
   RecordedSession,
   SessionBundle,
@@ -12,6 +14,7 @@ import type {
 
 type StorageRepositoryOptions = {
   dataDir?: string;
+  defaultSettings?: JourneyForgeSettings;
 };
 
 type PersistSessionBundleInput = {
@@ -38,14 +41,37 @@ const readJson = async <T>(filePath: string): Promise<T> =>
 const sessionDir = (dataDir: string, sessionId: string) => join(dataDir, 'sessions', sessionId);
 const generatedDir = (dataDir: string) => join(dataDir, 'generated');
 const exportDir = (dataDir: string) => join(dataDir, 'exports');
+const settingsFile = (dataDir: string) => join(dataDir, 'settings.json');
 
 export type StorageRepository = ReturnType<typeof createStorageRepository>;
 
 export const createStorageRepository = (options: StorageRepositoryOptions = {}) => {
   const dataDir = options.dataDir ?? defaultDataDir();
+  const defaultSettings = options.defaultSettings ?? DEFAULT_SETTINGS;
+
+  const getSettings = async (): Promise<JourneyForgeSettings> => {
+    const target = settingsFile(dataDir);
+
+    try {
+      return await readJson<JourneyForgeSettings>(target);
+    } catch (error) {
+      const candidate = defaultSettings;
+      if (!candidate || !(error instanceof Error && 'code' in error && error.code === 'ENOENT')) {
+        throw error;
+      }
+      await writeJson(target, candidate);
+      return candidate;
+    }
+  };
 
   return {
     dataDir,
+    async getSettings() {
+      return getSettings();
+    },
+    async saveSettings(settings: JourneyForgeSettings) {
+      await writeJson(settingsFile(dataDir), settings);
+    },
     async saveSession(session: RecordedSession) {
       await writeJson(join(sessionDir(dataDir, session.id), 'session.json'), session);
     },

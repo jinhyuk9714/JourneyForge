@@ -5,6 +5,7 @@ import { app, BrowserWindow } from 'electron';
 
 import { registerExportIpc } from './ipc/export.ipc';
 import { registerRecordingIpc } from './ipc/recording.ipc';
+import { registerSettingsIpc } from './ipc/settings.ipc';
 import { registerSessionIpc } from './ipc/session.ipc';
 import { desktopApp } from './services/journeyForgeDesktopService';
 
@@ -37,6 +38,7 @@ app.whenReady().then(async () => {
   registerRecordingIpc();
   registerSessionIpc();
   registerExportIpc();
+  registerSettingsIpc();
   await createWindow();
 
   app.on('activate', async () => {

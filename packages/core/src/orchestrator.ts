@@ -20,18 +20,31 @@ type JourneyForgeAppOptions = {
 };
 
 export const createJourneyForgeApp = (options: JourneyForgeAppOptions = {}) => {
-  const settings = options.settings ?? DEFAULT_SETTINGS;
-  const repository = createStorageRepository({ dataDir: options.dataDir });
+  const repository = createStorageRepository({
+    dataDir: options.dataDir,
+    defaultSettings: options.settings ?? DEFAULT_SETTINGS,
+  });
   const recorder = createRecorderService({
-    settings,
+    settings: options.settings ?? DEFAULT_SETTINGS,
     ...options.recorder,
   });
 
   return {
     repository,
     recorder,
+    async getSettings() {
+      return repository.getSettings();
+    },
+    async updateSettings(settings: JourneyForgeSettings) {
+      await repository.saveSettings(settings);
+      return repository.getSettings();
+    },
     async startRecording(input: { baseUrl: string; name?: string }) {
-      return recorder.startRecording(input);
+      const settings = await repository.getSettings();
+      return recorder.startRecording({
+        ...input,
+        settingsSnapshot: settings,
+      });
     },
     getRecorderStatus() {
       return recorder.getStatus();
@@ -41,17 +54,25 @@ export const createJourneyForgeApp = (options: JourneyForgeAppOptions = {}) => {
       return this.analyzeRecordedSession(session);
     },
     async analyzeRecordedSession(session: RecordedSession): Promise<SessionBundle> {
-      const journey = normalizeSession(session);
+      const settings = session.settingsSnapshot ?? (await repository.getSettings());
+      const sessionWithSnapshot =
+        session.settingsSnapshot
+          ? session
+          : {
+              ...session,
+              settingsSnapshot: settings,
+            };
+      const journey = normalizeSession(sessionWithSnapshot, settings);
       const artifacts = buildJourneyArtifacts(journey, settings);
       await persistSessionBundle({
         repository,
-        session,
+        session: sessionWithSnapshot,
         journey,
         artifacts,
       });
 
       return {
-        session,
+        session: sessionWithSnapshot,
         journey,
         artifacts,
       };

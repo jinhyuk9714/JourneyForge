@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-import type { ArtifactKind, RecorderStatus, SessionBundle, SessionSummary } from '@journeyforge/shared';
+import type {
+  ArtifactKind,
+  JourneyForgeSettings,
+  RecorderStatus,
+  SessionBundle,
+  SessionSummary,
+} from '@journeyforge/shared';
 
 import { IPC_CHANNELS } from '../main/ipc/channels';
 
@@ -17,6 +23,10 @@ export type JourneyForgeDesktopApi = {
   exports: {
     write(input: { sessionId: string; artifactKinds: ArtifactKind[] }): Promise<{ exportedPaths: string[] }>;
   };
+  settings: {
+    get(): Promise<JourneyForgeSettings>;
+    update(input: JourneyForgeSettings): Promise<JourneyForgeSettings>;
+  };
 };
 
 const api: JourneyForgeDesktopApi = {
@@ -31,6 +41,10 @@ const api: JourneyForgeDesktopApi = {
   },
   exports: {
     write: (input) => ipcRenderer.invoke(IPC_CHANNELS.exportsWrite, input),
+  },
+  settings: {
+    get: () => ipcRenderer.invoke(IPC_CHANNELS.settingsGet),
+    update: (input) => ipcRenderer.invoke(IPC_CHANNELS.settingsUpdate, input),
   },
 };
 

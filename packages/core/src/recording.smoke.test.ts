@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { DEFAULT_SETTINGS } from '@journeyforge/shared';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { Page } from 'playwright';
 
@@ -79,6 +80,74 @@ describe('recording smoke', () => {
     const exportedPaths = await app.exportArtifacts(bundle.session.id, ['playwright', 'flow-doc']);
     expect(exportedPaths).toHaveLength(2);
     expect(readFileSync(exportedPaths[0]!, 'utf8')).toContain("test('smoke-journey'");
+
+    await app.dispose();
+  }, 60_000);
+
+  it('applies updated settings only to recordings started after the change', async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), 'journeyforge-smoke-settings-'));
+    const server = await startDemoTargetServer();
+    cleanup = server.close;
+
+    let activePage: Page | null = null;
+    const app = createJourneyForgeApp({
+      dataDir,
+      recorder: {
+        launchOptions: {
+          headless: true,
+        },
+        onPageReady(page) {
+          activePage = page;
+        },
+      },
+    });
+
+    await app.updateSettings({
+      ...DEFAULT_SETTINGS,
+      maskEmailInputs: false,
+    });
+
+    const first = await app.startRecording({
+      baseUrl: `${server.baseUrl}/login`,
+      name: 'Unmasked Journey',
+    });
+
+    await activePage!.getByLabel('Email').fill('qa@example.com');
+    await activePage!.getByLabel('Password').fill('super-secret');
+
+    const unmaskedBundle = await app.stopRecording(first.sessionId);
+    const unmaskedEmail = unmaskedBundle.session.rawEvents.find(
+      (event) => event.type === 'input' && event.fieldName === 'email',
+    );
+
+    expect(unmaskedBundle.session.settingsSnapshot).toBeDefined();
+    expect(unmaskedBundle.session.settingsSnapshot!.maskEmailInputs).toBe(false);
+    expect(unmaskedEmail).toMatchObject({
+      value: 'qa@example.com',
+      masked: false,
+    });
+
+    await app.updateSettings(DEFAULT_SETTINGS);
+
+    const second = await app.startRecording({
+      baseUrl: `${server.baseUrl}/login`,
+      name: 'Masked Journey',
+    });
+
+    await activePage!.getByLabel('Email').fill('qa@example.com');
+    await activePage!.getByLabel('Password').fill('super-secret');
+
+    const maskedBundle = await app.stopRecording(second.sessionId);
+    const maskedEmail = maskedBundle.session.rawEvents.find(
+      (event) => event.type === 'input' && event.fieldName === 'email',
+    );
+
+    expect(maskedBundle.session.settingsSnapshot).toBeDefined();
+    expect(maskedBundle.session.settingsSnapshot!.maskEmailInputs).toBe(true);
+    expect(maskedEmail).toMatchObject({
+      value: 'q***@example.com',
+      masked: true,
+    });
 
     await app.dispose();
   }, 60_000);

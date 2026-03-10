@@ -15,6 +15,7 @@ import { injectedRecorderSource } from './injectedRecorder';
 type StartRecordingInput = {
   baseUrl: string;
   name?: string;
+  settingsSnapshot?: JourneyForgeSettings;
 };
 
 type ActiveSession = {
@@ -22,6 +23,7 @@ type ActiveSession = {
   baseUrl: string;
   name: string;
   startedAt: number;
+  settingsSnapshot: JourneyForgeSettings;
   rawEvents: RawEvent[];
 };
 
@@ -123,12 +125,13 @@ export const createRecorderService = (options: RecorderServiceOptions = {}) => {
       });
       context = await browser.newContext();
       await context.exposeBinding('__journeyforgeRecord', async (_source, event: RawEvent & { inputType?: string }) => {
+        const sessionSettings = activeSession?.settingsSnapshot ?? settings;
         if (event.type === 'input') {
           const decision = maskInputValue({
             value: event.value,
             fieldName: event.fieldName,
             inputType: event.inputType,
-            maskEmails: settings.maskEmailInputs,
+            maskEmails: sessionSettings.maskEmailInputs,
           });
 
           pushEvent({
@@ -153,6 +156,7 @@ export const createRecorderService = (options: RecorderServiceOptions = {}) => {
         baseUrl: input.baseUrl,
         name: input.name ?? 'Recorded Journey',
         startedAt: Date.now(),
+        settingsSnapshot: input.settingsSnapshot ?? settings,
         rawEvents: [],
       };
       status = {
@@ -187,6 +191,7 @@ export const createRecorderService = (options: RecorderServiceOptions = {}) => {
         baseUrl: activeSession.baseUrl,
         startedAt: activeSession.startedAt,
         endedAt: Date.now(),
+        settingsSnapshot: activeSession.settingsSnapshot,
         rawEvents: [...activeSession.rawEvents].sort((left, right) => left.timestamp - right.timestamp),
       };
 

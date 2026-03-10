@@ -1,4 +1,5 @@
 import {
+  DEFAULT_SETTINGS,
   buildPathWithSafeQuery,
   buildUrlWithSafeQuery,
   inferScenarioSlug,
@@ -19,6 +20,7 @@ import type {
   RawEvent,
   RecordedSession,
   SubmitEvent,
+  JourneyForgeSettings,
 } from '@journeyforge/shared';
 
 type ActionEvent = ClickEvent | InputEvent | NavigationEvent | SubmitEvent;
@@ -39,7 +41,7 @@ const isActionEvent = (event: RawEvent): event is ActionEvent =>
   event.type === 'navigation' ||
   event.type === 'submit';
 
-const buildApiCalls = (events: RawEvent[]): ApiCall[] => {
+const buildApiCalls = (events: RawEvent[], settings: JourneyForgeSettings): ApiCall[] => {
   const requestMap = new Map<string, NetworkRequestEvent>();
   const responseMap = new Map<string, NetworkResponseEvent>();
 
@@ -58,7 +60,7 @@ const buildApiCalls = (events: RawEvent[]): ApiCall[] => {
     if (!['fetch', 'xhr'].includes(request.resourceType)) {
       continue;
     }
-    if (isStaticAssetUrl(request.url) || isAnalyticsUrl(request.url)) {
+    if (isStaticAssetUrl(request.url) || isAnalyticsUrl(request.url, settings.analyticsPatterns)) {
       continue;
     }
 
@@ -250,8 +252,11 @@ const attachApisToSteps = (steps: StepDraft[], apis: ApiCall[]) =>
     };
   });
 
-export const normalizeSession = (session: RecordedSession): NormalizedJourney => {
-  const coreApis = buildApiCalls(session.rawEvents);
+export const normalizeSession = (
+  session: RecordedSession,
+  settings: JourneyForgeSettings = DEFAULT_SETTINGS,
+): NormalizedJourney => {
+  const coreApis = buildApiCalls(session.rawEvents, settings);
   const steps = attachApisToSteps(buildActionSteps(session), coreApis);
   const journeySlug = slugify(session.name);
   const k6Candidates = [...coreApis]

@@ -119,6 +119,7 @@ export type RecordedSession = {
   baseUrl: string;
   startedAt: number;
   endedAt: number;
+  settingsSnapshot?: JourneyForgeSettings;
   rawEvents: RawEvent[];
 };
 

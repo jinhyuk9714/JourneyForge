@@ -5,4 +5,6 @@ export const IPC_CHANNELS = {
   sessionsList: 'sessions:list',
   sessionsGet: 'sessions:get',
   exportsWrite: 'exports:write',
+  settingsGet: 'settings:get',
+  settingsUpdate: 'settings:update',
 } as const;

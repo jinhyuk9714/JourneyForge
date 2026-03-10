@@ -1,39 +1,74 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { DEFAULT_SETTINGS } from '@journeyforge/shared';
+import type { JourneyForgeSettings } from '@journeyforge/shared';
 
-const STORAGE_KEY = 'journeyforge.renderer.settings';
+const parseAnalyticsPatterns = (value: string) =>
+  value
+    .split('\n')
+    .map((pattern) => pattern.trim())
+    .filter(Boolean);
+
+const toErrorMessage = (error: unknown) => (error instanceof Error ? error.message : 'Failed to update settings.');
 
 export const SettingsPage = () => {
-  const [maskEmails, setMaskEmails] = useState(DEFAULT_SETTINGS.maskEmailInputs);
-  const [durationThreshold, setDurationThreshold] = useState(DEFAULT_SETTINGS.k6Thresholds.httpReqDurationP95);
-  const [failedRate, setFailedRate] = useState(DEFAULT_SETTINGS.k6Thresholds.httpReqFailedRate);
+  const [settings, setSettings] = useState<JourneyForgeSettings>(DEFAULT_SETTINGS);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'saving' | 'error'>('loading');
+  const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return;
-    }
-    const parsed = JSON.parse(raw) as {
-      maskEmails: boolean;
-      durationThreshold: number;
-      failedRate: number;
+    let cancelled = false;
+
+    const load = async () => {
+      try {
+        const loaded = await window.journeyforge.settings.get();
+        if (cancelled) {
+          return;
+        }
+        setSettings(loaded);
+        setStatus('ready');
+      } catch (cause) {
+        if (cancelled) {
+          return;
+        }
+        setError(toErrorMessage(cause));
+        setStatus('error');
+      }
     };
-    setMaskEmails(parsed.maskEmails);
-    setDurationThreshold(parsed.durationThreshold);
-    setFailedRate(parsed.failedRate);
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  useEffect(() => {
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        maskEmails,
-        durationThreshold,
-        failedRate,
-      }),
-    );
-  }, [durationThreshold, failedRate, maskEmails]);
+  const persistSettings = (nextSettings: JourneyForgeSettings) => {
+    setSettings(nextSettings);
+    setError(null);
+    setStatus('saving');
+
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+
+    void window.journeyforge.settings
+      .update(nextSettings)
+      .then((saved) => {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+        setSettings(saved);
+        setStatus('ready');
+      })
+      .catch((cause) => {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+        setError(toErrorMessage(cause));
+        setStatus('error');
+      });
+  };
 
   return (
     <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
@@ -41,46 +76,91 @@ export const SettingsPage = () => {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Settings</p>
         <h2 className="font-display text-3xl text-ink">Tune local defaults for noisy traffic and load-test thresholds.</h2>
         <p className="mt-2 text-sm text-ink/65">
-          These MVP settings are stored locally in the renderer and help you reason about what the desktop app will filter or generate next.
+          Saved to <code>data/settings.json</code>. Changes apply to sessions that start after the save completes.
+        </p>
+        <p className="mt-2 text-xs text-ink/55">
+          {status === 'loading'
+            ? 'Loading current settings...'
+            : status === 'saving'
+              ? 'Saving updates for the next recording...'
+              : status === 'error'
+                ? error ?? 'Failed to update settings.'
+                : 'Current settings are active for the next recording.'}
         </p>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <div className="rounded-3xl border border-ink/10 bg-sand/90 p-5">
-          <h3 className="font-display text-xl text-ink">Analytics filters</h3>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {DEFAULT_SETTINGS.analyticsPatterns.map((pattern) => (
-              <span key={pattern} className="rounded-full bg-white px-3 py-1 font-mono text-xs text-ink/75">
-                {pattern}
-              </span>
-            ))}
-          </div>
+          <label htmlFor="analytics-patterns" className="font-display text-xl text-ink">
+            Analytics filters
+          </label>
+          <p className="mt-2 text-sm text-ink/65">One pattern per line. Matching requests are ignored during journey normalization.</p>
+          <textarea
+            id="analytics-patterns"
+            aria-label="Analytics filters"
+            className="mt-4 min-h-40 w-full rounded-3xl border border-ink/10 bg-white px-4 py-3 font-mono text-sm text-ink"
+            value={settings.analyticsPatterns.join('\n')}
+            onChange={(event) =>
+              persistSettings({
+                ...settings,
+                analyticsPatterns: parseAnalyticsPatterns(event.target.value),
+              })
+            }
+          />
         </div>
 
         <div className="space-y-4 rounded-3xl border border-ink/10 bg-ink p-5 text-sand">
-          <label className="flex items-center justify-between gap-4">
+          <label htmlFor="mask-email-inputs" className="flex items-center justify-between gap-4">
             <span className="text-sm">Mask email inputs</span>
-            <input type="checkbox" checked={maskEmails} onChange={(event) => setMaskEmails(event.target.checked)} />
-          </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span>k6 p95 threshold (ms)</span>
             <input
-              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sand"
-              type="number"
-              value={durationThreshold}
-              onChange={(event) => setDurationThreshold(Number(event.target.value))}
+              id="mask-email-inputs"
+              type="checkbox"
+              checked={settings.maskEmailInputs}
+              onChange={(event) =>
+                persistSettings({
+                  ...settings,
+                  maskEmailInputs: event.target.checked,
+                })
+              }
             />
           </label>
-          <label className="flex flex-col gap-2 text-sm">
+          <label htmlFor="k6-duration-threshold" className="flex flex-col gap-2 text-sm">
+            <span>k6 p95 threshold (ms)</span>
+            <input
+              id="k6-duration-threshold"
+              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sand"
+              type="number"
+              value={settings.k6Thresholds.httpReqDurationP95}
+              onChange={(event) =>
+                persistSettings({
+                  ...settings,
+                  k6Thresholds: {
+                    ...settings.k6Thresholds,
+                    httpReqDurationP95: Number(event.target.value),
+                  },
+                })
+              }
+            />
+          </label>
+          <label htmlFor="k6-failed-threshold" className="flex flex-col gap-2 text-sm">
             <span>k6 error-rate threshold</span>
             <input
+              id="k6-failed-threshold"
               className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sand"
               type="number"
               min="0"
               max="1"
               step="0.001"
-              value={failedRate}
-              onChange={(event) => setFailedRate(Number(event.target.value))}
+              value={settings.k6Thresholds.httpReqFailedRate}
+              onChange={(event) =>
+                persistSettings({
+                  ...settings,
+                  k6Thresholds: {
+                    ...settings.k6Thresholds,
+                    httpReqFailedRate: Number(event.target.value),
+                  },
+                })
+              }
             />
           </label>
         </div>
