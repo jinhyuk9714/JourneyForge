@@ -32,18 +32,35 @@ describe('desktop package manifest', () => {
       'playwright test -c playwright.real-execution.config.ts',
     );
     expect(packageJson.scripts?.['prepackage:mac']).toBe(
-      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && electron-builder install-app-deps',
+      undefined,
     );
-    expect(packageJson.scripts?.['package:mac']).toBe('electron-builder --config electron-builder.yml --publish never');
-    expect(packageJson.scripts?.['package:mac:dir']).toBe(
-      'electron-builder --config electron-builder.yml --dir --publish never',
+    expect(packageJson.scripts?.['prepackage:mac:signed']).toBe(
+      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && pnpm exec electron-builder install-app-deps',
+    );
+    expect(packageJson.scripts?.['prepackage:mac:unsigned']).toBe(
+      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && pnpm exec electron-builder install-app-deps',
+    );
+    expect(packageJson.scripts?.['prepackage:mac:dir:unsigned']).toBe(
+      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && pnpm exec electron-builder install-app-deps',
+    );
+    expect(packageJson.scripts?.['package:mac']).toBe('pnpm package:mac:signed');
+    expect(packageJson.scripts?.['package:mac:signed']).toBe('node scripts/package-mac-signed.mjs');
+    expect(packageJson.scripts?.['package:mac:unsigned']).toBe(
+      'pnpm exec electron-builder --config electron-builder.unsigned.yml --publish never',
+    );
+    expect(packageJson.scripts?.['package:mac:dir:unsigned']).toBe(
+      'pnpm exec electron-builder --config electron-builder.unsigned.yml --dir --publish never',
     );
     expect(packageJson.scripts?.['pretest:package-smoke']).toBe(
-      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && electron-builder install-app-deps && pnpm package:mac:dir',
+      'pnpm package:mac:dir:unsigned',
     );
     expect(packageJson.scripts?.['test:package-smoke']).toBe(
       'playwright test -c playwright.package-smoke.config.ts',
     );
+    expect(packageJson.scripts?.['test:package-smoke:signed']).toBe(
+      'playwright test -c playwright.package-smoke.config.ts',
+    );
+    expect(packageJson.scripts?.['notarize:mac:verify']).toBe('node scripts/verify-mac-release.mjs');
   });
 
   it('points workspace runtime packages at built dist entries for Electron execution', () => {
@@ -76,8 +93,13 @@ describe('desktop package manifest', () => {
     }
   });
 
-  it('declares an unsigned macOS packaging baseline for the desktop app', () => {
+  it('declares a signed macOS packaging baseline for the desktop app', () => {
     const builderConfig = readFileSync(resolve(__dirname, '../../electron-builder.yml'), 'utf8');
+    const mainEntitlements = readFileSync(resolve(__dirname, '../../build/entitlements.mac.plist'), 'utf8');
+    const inheritedEntitlements = readFileSync(
+      resolve(__dirname, '../../build/entitlements.mac.inherit.plist'),
+      'utf8',
+    );
 
     expect(builderConfig).toContain('productName: JourneyForge');
     expect(builderConfig).toContain('directories:');
@@ -85,7 +107,16 @@ describe('desktop package manifest', () => {
     expect(builderConfig).toContain('target:');
     expect(builderConfig).toContain('- dmg');
     expect(builderConfig).toContain('- zip');
-    expect(builderConfig).not.toContain('- dir');
-    expect(builderConfig).toContain('identity: null');
+    expect(builderConfig).toContain('hardenedRuntime: true');
+    expect(builderConfig).toContain('gatekeeperAssess: false');
+    expect(builderConfig).toContain('entitlements: build/entitlements.mac.plist');
+    expect(builderConfig).toContain('entitlementsInherit: build/entitlements.mac.inherit.plist');
+    expect(builderConfig).toContain('notarize: true');
+    expect(builderConfig).not.toContain('identity: null');
+
+    expect(mainEntitlements).toContain('com.apple.security.cs.allow-jit');
+    expect(mainEntitlements).toContain('com.apple.security.cs.disable-library-validation');
+    expect(inheritedEntitlements).toContain('com.apple.security.inherit');
+    expect(inheritedEntitlements).toContain('com.apple.security.cs.allow-jit');
   });
 });

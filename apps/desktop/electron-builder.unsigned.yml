@@ -14,16 +14,14 @@ files:
   - '!e2e/**'
   - '!e2e-real/**'
   - '!e2e-execution-real/**'
+  - '!e2e-package/**'
   - '!playwright*.config.ts'
   - '!scripts/**'
+  - '!build/**'
 
 mac:
   category: public.app-category.developer-tools
-  hardenedRuntime: true
-  gatekeeperAssess: false
-  entitlements: build/entitlements.mac.plist
-  entitlementsInherit: build/entitlements.mac.inherit.plist
-  notarize: true
+  identity: null
   target:
     - dmg
     - zip

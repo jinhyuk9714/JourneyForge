@@ -28,7 +28,9 @@ pnpm --filter @journeyforge/desktop test:e2e
 pnpm --filter @journeyforge/desktop test:smoke-real
 pnpm --filter @journeyforge/desktop test:smoke-execution-real
 pnpm --filter @journeyforge/desktop test:package-smoke
+pnpm --filter @journeyforge/desktop test:package-smoke:signed
 pnpm --filter @journeyforge/desktop package:mac
+pnpm --filter @journeyforge/desktop notarize:mac:verify
 pnpm test
 pnpm build
 ```
@@ -55,10 +57,18 @@ pnpm build
 - `pnpm --filter @journeyforge/desktop exec node node_modules/electron/install.js` repairs a skipped Electron binary download in fresh worktrees
 - If Playwright execution reports keychain load issues, rebuild native modules in the desktop package before retrying
 
-## Packaged Desktop Baseline
+## Signed macOS Release
 
-- `pnpm --filter @journeyforge/desktop package:mac` builds an unsigned macOS `.dmg` and `.zip` under `apps/desktop/release`
-- `pnpm --filter @journeyforge/desktop test:package-smoke` builds a local unpacked `.app` and verifies packaged startup against the release executable
+- `pnpm --filter @journeyforge/desktop package:mac` is now the signed release path and emits a signed `.dmg` and `.zip` under `apps/desktop/release`
+- `pnpm --filter @journeyforge/desktop package:mac:unsigned` and `pnpm --filter @journeyforge/desktop package:mac:dir:unsigned` remain available as developer-only fallbacks
+- `pnpm --filter @journeyforge/desktop notarize:mac:verify` runs `codesign`, `stapler`, `spctl`, and the packaged startup smoke against the signed artifacts
+- Export these variables before building a signed release:
+  - signing: `CSC_NAME` or `CSC_LINK`
+  - notarization via App Store Connect API key: `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`
+  - notarization via Apple ID: `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`
+  - notarization via keychain profile: `APPLE_KEYCHAIN_PROFILE` with optional `APPLE_KEYCHAIN`
+- Add the Developer ID certificate to your login keychain before packaging. `security find-identity -v -p codesigning` should show a `Developer ID Application` identity.
+- `pnpm --filter @journeyforge/desktop test:package-smoke` still uses an unsigned unpacked `.app` for fast local packaged-startup coverage
 - The packaged app keeps the same `data/` subdirectory layout, but stores it under Electron `userData` instead of the repo root
 - `settings.json`, session data, and exports appear there after the first settings/session interaction
 - Playwright, k6, and keychain behavior still depend on the local machine toolchain and macOS keychain
@@ -107,9 +117,9 @@ pnpm build
 11. Export at least one artifact and confirm a file appears under `data/exports`
 12. Save, replace, and clear the Playwright password from `Settings`
 13. Restart the app and confirm the credential status still matches the OS keychain state
-14. Run `pnpm --filter @journeyforge/desktop package:mac` and confirm `.dmg` and `.zip` artifacts are produced under `apps/desktop/release`
+14. Export signing and notarization credentials, run `pnpm --filter @journeyforge/desktop package:mac`, then run `pnpm --filter @journeyforge/desktop notarize:mac:verify`
+15. Confirm `.dmg` and `.zip` artifacts are produced under `apps/desktop/release`
 
 ## Current Limits
 
 - OS keychain-backed credential flow is still manually validated on a developer machine
-- Code signing, notarization, and installer trust are still outside automated coverage
