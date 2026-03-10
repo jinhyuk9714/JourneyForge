@@ -4,6 +4,16 @@ import { join, resolve } from 'node:path';
 
 const hasValue = (value) => typeof value === 'string' && value.trim().length > 0;
 
+const resolveDmgSigningIdentity = (env = process.env) => {
+  if (!hasValue(env.CSC_NAME)) {
+    throw new Error('Set CSC_NAME so the signed macOS release flow can codesign the DMG before notarization.');
+  }
+
+  return env.CSC_NAME.startsWith('Developer ID Application:')
+    ? env.CSC_NAME
+    : `Developer ID Application: ${env.CSC_NAME}`;
+};
+
 export const validateMacReleaseEnvironment = (env = process.env) => {
   const hasSigningIdentity = hasValue(env.CSC_NAME) || hasValue(env.CSC_LINK);
   const hasApiKeyNotarization =
@@ -35,6 +45,44 @@ export const validateMacReleaseEnvironment = (env = process.env) => {
           : null,
     errors,
   };
+};
+
+export const buildMacReleaseNotarizationSteps = ({ dmgPath, env = process.env }) => {
+  const submitArgs = ['notarytool', 'submit', dmgPath];
+  const signingIdentity = resolveDmgSigningIdentity(env);
+
+  if (hasValue(env.APPLE_API_KEY) && hasValue(env.APPLE_API_KEY_ID) && hasValue(env.APPLE_API_ISSUER)) {
+    submitArgs.push('--key', env.APPLE_API_KEY, '--key-id', env.APPLE_API_KEY_ID, '--issuer', env.APPLE_API_ISSUER);
+  } else if (hasValue(env.APPLE_ID) && hasValue(env.APPLE_APP_SPECIFIC_PASSWORD) && hasValue(env.APPLE_TEAM_ID)) {
+    submitArgs.push('--apple-id', env.APPLE_ID, '--password', env.APPLE_APP_SPECIFIC_PASSWORD, '--team-id', env.APPLE_TEAM_ID);
+  } else if (hasValue(env.APPLE_KEYCHAIN_PROFILE)) {
+    submitArgs.push('--keychain-profile', env.APPLE_KEYCHAIN_PROFILE);
+    if (hasValue(env.APPLE_KEYCHAIN)) {
+      submitArgs.push('--keychain', env.APPLE_KEYCHAIN);
+    }
+  } else {
+    throw new Error('No notarization credentials are available to submit the DMG.');
+  }
+
+  submitArgs.push('--wait');
+
+  return [
+    {
+      label: 'codesign-dmg',
+      command: 'codesign',
+      args: ['--force', '--sign', signingIdentity, '--timestamp', dmgPath],
+    },
+    {
+      label: 'notarytool-submit-dmg',
+      command: 'xcrun',
+      args: submitArgs,
+    },
+    {
+      label: 'stapler-staple-dmg',
+      command: 'xcrun',
+      args: ['stapler', 'staple', dmgPath],
+    },
+  ];
 };
 
 const pickArtifact = async (releaseDir, predicate, missingMessage) => {

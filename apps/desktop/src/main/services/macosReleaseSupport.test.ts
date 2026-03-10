@@ -20,11 +20,16 @@ type MacReleaseVerificationStep = {
 
 const macosReleaseSupportModulePath = '../../../scripts/macos-release-support.mjs';
 const {
+  buildMacReleaseNotarizationSteps,
   buildMacReleaseVerificationSteps,
   findMacReleaseArtifacts,
   validateMacReleaseEnvironment,
 } = (await import(macosReleaseSupportModulePath)) as Awaited<
   Promise<{
+    buildMacReleaseNotarizationSteps: (input: {
+      dmgPath: string;
+      env?: NodeJS.ProcessEnv;
+    }) => MacReleaseVerificationStep[];
     buildMacReleaseVerificationSteps: (artifacts: Pick<MacReleaseArtifacts, 'appPath' | 'dmgPath'>) => MacReleaseVerificationStep[];
     findMacReleaseArtifacts: (input: {
       releaseDir: string;
@@ -69,6 +74,155 @@ describe('macosReleaseSupport', () => {
       notarizationMode: 'apple-id',
       errors: [],
     });
+  });
+
+  it('builds DMG notarization steps for a keychain profile', () => {
+    expect(
+      buildMacReleaseNotarizationSteps({
+        dmgPath: '/tmp/JourneyForge.dmg',
+        env: {
+          CSC_NAME: 'JINHYUK SUNG (9VRNY5PMG3)',
+          APPLE_KEYCHAIN_PROFILE: 'JourneyForge',
+          APPLE_KEYCHAIN: '/tmp/login.keychain-db',
+        },
+      }),
+    ).toEqual([
+      {
+        label: 'codesign-dmg',
+        command: 'codesign',
+        args: [
+          '--force',
+          '--sign',
+          'Developer ID Application: JINHYUK SUNG (9VRNY5PMG3)',
+          '--timestamp',
+          '/tmp/JourneyForge.dmg',
+        ],
+      },
+      {
+        label: 'notarytool-submit-dmg',
+        command: 'xcrun',
+        args: [
+          'notarytool',
+          'submit',
+          '/tmp/JourneyForge.dmg',
+          '--keychain-profile',
+          'JourneyForge',
+          '--keychain',
+          '/tmp/login.keychain-db',
+          '--wait',
+        ],
+      },
+      {
+        label: 'stapler-staple-dmg',
+        command: 'xcrun',
+        args: ['stapler', 'staple', '/tmp/JourneyForge.dmg'],
+      },
+    ]);
+  });
+
+  it('builds DMG notarization steps for App Store Connect API credentials', () => {
+    expect(
+      buildMacReleaseNotarizationSteps({
+        dmgPath: '/tmp/JourneyForge.dmg',
+        env: {
+          CSC_NAME: 'JINHYUK SUNG (9VRNY5PMG3)',
+          APPLE_API_KEY: '/tmp/AuthKey_ABCD1234.p8',
+          APPLE_API_KEY_ID: 'ABCD1234',
+          APPLE_API_ISSUER: 'issuer-id',
+        },
+      }),
+    ).toEqual([
+      {
+        label: 'codesign-dmg',
+        command: 'codesign',
+        args: [
+          '--force',
+          '--sign',
+          'Developer ID Application: JINHYUK SUNG (9VRNY5PMG3)',
+          '--timestamp',
+          '/tmp/JourneyForge.dmg',
+        ],
+      },
+      {
+        label: 'notarytool-submit-dmg',
+        command: 'xcrun',
+        args: [
+          'notarytool',
+          'submit',
+          '/tmp/JourneyForge.dmg',
+          '--key',
+          '/tmp/AuthKey_ABCD1234.p8',
+          '--key-id',
+          'ABCD1234',
+          '--issuer',
+          'issuer-id',
+          '--wait',
+        ],
+      },
+      {
+        label: 'stapler-staple-dmg',
+        command: 'xcrun',
+        args: ['stapler', 'staple', '/tmp/JourneyForge.dmg'],
+      },
+    ]);
+  });
+
+  it('builds DMG notarization steps for Apple ID credentials', () => {
+    expect(
+      buildMacReleaseNotarizationSteps({
+        dmgPath: '/tmp/JourneyForge.dmg',
+        env: {
+          CSC_NAME: 'JINHYUK SUNG (9VRNY5PMG3)',
+          APPLE_ID: 'qa@example.com',
+          APPLE_APP_SPECIFIC_PASSWORD: 'app-password',
+          APPLE_TEAM_ID: 'TEAM123456',
+        },
+      }),
+    ).toEqual([
+      {
+        label: 'codesign-dmg',
+        command: 'codesign',
+        args: [
+          '--force',
+          '--sign',
+          'Developer ID Application: JINHYUK SUNG (9VRNY5PMG3)',
+          '--timestamp',
+          '/tmp/JourneyForge.dmg',
+        ],
+      },
+      {
+        label: 'notarytool-submit-dmg',
+        command: 'xcrun',
+        args: [
+          'notarytool',
+          'submit',
+          '/tmp/JourneyForge.dmg',
+          '--apple-id',
+          'qa@example.com',
+          '--password',
+          'app-password',
+          '--team-id',
+          'TEAM123456',
+          '--wait',
+        ],
+      },
+      {
+        label: 'stapler-staple-dmg',
+        command: 'xcrun',
+        args: ['stapler', 'staple', '/tmp/JourneyForge.dmg'],
+      },
+    ]);
+  });
+
+  it('requires CSC_NAME so the DMG can be signed before notarization', () => {
+    expect(() =>
+      buildMacReleaseNotarizationSteps({
+        dmgPath: '/tmp/JourneyForge.dmg',
+        env: {
+          APPLE_KEYCHAIN_PROFILE: 'JourneyForge',
+        },
+      }),
+    ).toThrow('Set CSC_NAME so the signed macOS release flow can codesign the DMG before notarization.');
   });
 
   it('reports missing signing and notarization environment variables', () => {

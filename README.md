@@ -60,6 +60,7 @@ pnpm build
 ## Signed macOS Release
 
 - `pnpm --filter @journeyforge/desktop package:mac` is now the signed release path and emits a signed `.dmg` and `.zip` under `apps/desktop/release`
+- The signed packaging flow notarizes the app through `electron-builder`, then submits the generated DMG to `notarytool` and staples it before returning
 - `pnpm --filter @journeyforge/desktop package:mac:unsigned` and `pnpm --filter @journeyforge/desktop package:mac:dir:unsigned` remain available as developer-only fallbacks
 - `pnpm --filter @journeyforge/desktop notarize:mac:verify` runs `codesign`, `stapler`, `spctl`, and the packaged startup smoke against the signed artifacts
 - Export these variables before building a signed release:
@@ -127,9 +128,9 @@ pnpm build
 
 1. Export signing and notarization credentials
 2. Run `pnpm --filter @journeyforge/desktop package:mac`
-3. Run `pnpm --filter @journeyforge/desktop notarize:mac:verify`
-4. Confirm `.dmg` and `.zip` artifacts are produced under `apps/desktop/release`
-5. Confirm the signed/notarized `.app` and `.dmg` pass `codesign`, `stapler`, and `spctl`
+3. Confirm `.dmg` and `.zip` artifacts are produced under `apps/desktop/release`
+4. Run `pnpm --filter @journeyforge/desktop notarize:mac:verify`
+5. Confirm the signed/notarized `.app` and stapled `.dmg` pass `codesign`, `stapler`, and `spctl`
 
 ## Current Limits
 

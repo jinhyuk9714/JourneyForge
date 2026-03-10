@@ -1,6 +1,11 @@
 import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
 
-import { validateMacReleaseEnvironment } from './macos-release-support.mjs';
+import {
+  buildMacReleaseNotarizationSteps,
+  findMacReleaseArtifacts,
+  validateMacReleaseEnvironment,
+} from './macos-release-support.mjs';
 
 const validation = validateMacReleaseEnvironment(process.env);
 
@@ -21,4 +26,24 @@ const result = spawnSync('pnpm', ['exec', 'electron-builder', '--config', 'elect
 
 if (result.status !== 0) {
   process.exit(result.status ?? 1);
+}
+
+const artifacts = await findMacReleaseArtifacts({
+  releaseDir: resolve('release'),
+  productName: 'JourneyForge',
+});
+
+for (const step of buildMacReleaseNotarizationSteps({
+  dmgPath: artifacts.dmgPath,
+  env: process.env,
+})) {
+  console.log(`Running: ${step.command} ${step.args.join(' ')}`);
+  const stepResult = spawnSync(step.command, step.args, {
+    stdio: 'inherit',
+    env: process.env,
+  });
+
+  if (stepResult.status !== 0) {
+    process.exit(stepResult.status ?? 1);
+  }
 }
