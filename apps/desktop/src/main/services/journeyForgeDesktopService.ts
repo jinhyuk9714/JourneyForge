@@ -12,6 +12,7 @@ import type {
   SessionSummary,
   SettingsPayload,
 } from '@journeyforge/shared';
+import type { RecorderServiceOptions } from '@journeyforge/core';
 
 import { createCredentialService } from './credentialService';
 import { createExecutionService } from './executionService';
@@ -37,13 +38,16 @@ export type DesktopRuntime = {
 
 type CreateJourneyForgeDesktopRuntimeOptions = {
   dataDir?: string;
+  recorder?: Omit<RecorderServiceOptions, 'settings'>;
 };
 
 export const createJourneyForgeDesktopRuntime = ({
   dataDir = resolve(process.cwd(), 'data'),
+  recorder,
 }: CreateJourneyForgeDesktopRuntimeOptions = {}): DesktopRuntime => {
   const coreApp = createJourneyForgeApp({
     dataDir,
+    recorder,
   });
   const credentialService = createCredentialService();
   const executionService = createExecutionService({

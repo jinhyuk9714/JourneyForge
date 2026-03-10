@@ -4,6 +4,13 @@ type JourneyPreviewProps = {
   bundle: SessionBundle | null;
 };
 
+const toTestSlug = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
 export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
   if (!bundle) {
     return (
@@ -33,7 +40,11 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
       <div className="mt-6 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
         <div className="space-y-4">
           {bundle.journey.steps.map((step, index) => (
-            <article key={step.id} className="rounded-3xl border border-ink/10 bg-sand/80 p-4">
+            <article
+              key={step.id}
+              data-testid={`journey-step-${toTestSlug(step.title)}`}
+              className="rounded-3xl border border-ink/10 bg-sand/80 p-4"
+            >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-ink/45">Step {index + 1}</p>

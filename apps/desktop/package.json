@@ -8,8 +8,10 @@
     "predev": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
-    "pretest:e2e": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node node_modules/electron/install.js",
+    "pretest:e2e": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs",
     "test:e2e": "playwright test -c playwright.e2e.config.ts",
+    "pretest:smoke-real": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && pnpm --filter @journeyforge/core exec playwright install chromium",
+    "test:smoke-real": "playwright test -c playwright.real-smoke.config.ts",
     "test": "vitest run --passWithNoTests",
     "check-types": "tsc --noEmit -p tsconfig.json"
   },

@@ -25,6 +25,7 @@ pnpm dev
 pnpm demo-target
 pnpm smoke
 pnpm --filter @journeyforge/desktop test:e2e
+pnpm --filter @journeyforge/desktop test:smoke-real
 pnpm test
 pnpm build
 ```
@@ -63,6 +64,12 @@ pnpm build
 - Covered scenarios are `default`, `legacy`, and `cancel-execution`
 - The suite validates recording state transitions, preview rendering, explainability cards, artifact/bundle export messaging, and in-app execution logs
 
+## Real Desktop Smoke
+
+- `pnpm --filter @journeyforge/desktop test:smoke-real` launches the built Electron app against the real desktop runtime
+- The suite drives recording through a test-only autopilot in headless Chromium and verifies `record -> normalize -> generate -> preview -> export`
+- Covered scenarios are `login-search-detail` and `create-post`
+
 ## Manual Validation Checklist
 
 1. Run `pnpm demo-target`
@@ -79,4 +86,4 @@ pnpm build
 
 ## Current Limits
 
-- Real browser recording and real local Playwright/k6 toolchain execution are still manually validated on a developer machine
+- Real local Playwright/k6 execution is still manually validated on a developer machine

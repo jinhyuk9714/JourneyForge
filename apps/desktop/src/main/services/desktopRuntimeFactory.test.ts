@@ -59,4 +59,28 @@ describe('createDesktopRuntime', () => {
       scenario: 'legacy',
     });
   });
+
+  it('creates the real smoke runtime when real smoke env is enabled', () => {
+    const realRuntime = createStubRuntime();
+    const fakeRuntime = createStubRuntime();
+    const realSmokeRuntime = createStubRuntime();
+    const createRealSmokeRuntime = vi.fn(() => realSmokeRuntime);
+
+    const runtime = createDesktopRuntime({
+      env: {
+        JOURNEYFORGE_DESKTOP_REAL_SMOKE: '1',
+        JOURNEYFORGE_DESKTOP_REAL_SMOKE_SCENARIO: 'create-post',
+        JOURNEYFORGE_DESKTOP_REAL_SMOKE_DATA_DIR: '/tmp/journeyforge-desktop-real-smoke',
+      },
+      createRealRuntime: vi.fn(() => realRuntime),
+      createFakeRuntime: vi.fn(() => fakeRuntime),
+      createRealSmokeRuntime,
+    });
+
+    expect(runtime).toBe(realSmokeRuntime);
+    expect(createRealSmokeRuntime).toHaveBeenCalledWith({
+      dataDir: '/tmp/journeyforge-desktop-real-smoke',
+      scenario: 'create-post',
+    });
+  });
 });

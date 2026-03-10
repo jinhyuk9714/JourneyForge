@@ -18,9 +18,13 @@ describe('desktop package manifest', () => {
       'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build',
     );
     expect(packageJson.scripts?.['pretest:e2e']).toBe(
-      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node node_modules/electron/install.js',
+      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs',
     );
     expect(packageJson.scripts?.['test:e2e']).toBe('playwright test -c playwright.e2e.config.ts');
+    expect(packageJson.scripts?.['pretest:smoke-real']).toBe(
+      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && pnpm --filter @journeyforge/core exec playwright install chromium',
+    );
+    expect(packageJson.scripts?.['test:smoke-real']).toBe('playwright test -c playwright.real-smoke.config.ts');
   });
 
   it('points workspace runtime packages at built dist entries for Electron execution', () => {
