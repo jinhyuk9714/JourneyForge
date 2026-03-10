@@ -121,6 +121,8 @@ The dev-runtime keychain loop was manually validated on March 11, 2026.
 
 ### Packaged App Keychain Loop
 
+The packaged-app keychain loop was manually validated on March 11, 2026.
+
 1. Run `pnpm --filter @journeyforge/desktop package:mac:unsigned` for a fast local package or `pnpm --filter @journeyforge/desktop package:mac` for the signed release path
 2. Launch the packaged `.app`
 3. Repeat the same save, replace, delete, and relaunch loop from the `Settings` screen
@@ -136,4 +138,4 @@ The dev-runtime keychain loop was manually validated on March 11, 2026.
 
 ## Current Limits
 
-- The packaged-app OS keychain-backed credential flow is still manually validated on a developer machine
+- Signed/notarized macOS releases are still produced manually on a developer Mac; CI release automation is not wired yet
