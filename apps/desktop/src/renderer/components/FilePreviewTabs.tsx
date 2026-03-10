@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import type { ArtifactKind, GeneratedArtifact } from '@journeyforge/shared';
+import type { ArtifactKind, ExecutionTarget, GeneratedArtifact } from '@journeyforge/shared';
 
 import { artifactLabel, firstArtifactKind } from '../lib/artifacts';
 
@@ -8,11 +8,16 @@ type FilePreviewTabsProps = {
   artifacts: GeneratedArtifact[];
   onExport(artifactKinds: ArtifactKind[]): void;
   onExportBundle(): void;
+  onRun(target: ExecutionTarget): void;
 };
 
-export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle }: FilePreviewTabsProps) => {
+export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle, onRun }: FilePreviewTabsProps) => {
   const [activeKind, setActiveKind] = useState<ArtifactKind>(firstArtifactKind(artifacts));
   const activeArtifact = artifacts.find((artifact) => artifact.kind === activeKind) ?? artifacts[0];
+  const runnableTarget =
+    activeArtifact?.status === 'generated' && (activeArtifact.kind === 'playwright' || activeArtifact.kind === 'k6')
+      ? (activeArtifact.kind as ExecutionTarget)
+      : null;
 
   if (!activeArtifact) {
     return (
@@ -30,6 +35,15 @@ export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle }: FilePre
           <h3 className="font-display text-2xl text-ink">Preview and export</h3>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {runnableTarget ? (
+            <button
+              type="button"
+              className="rounded-2xl border border-ink/15 bg-mint/20 px-4 py-2 text-sm font-semibold text-ink transition hover:bg-mint/30"
+              onClick={() => onRun(runnableTarget)}
+            >
+              {runnableTarget === 'playwright' ? 'Playwright 실행' : 'k6 실행'}
+            </button>
+          ) : null}
           <button
             type="button"
             className="rounded-2xl border border-ink/15 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-sand"

@@ -36,4 +36,9 @@ export const DEFAULT_SETTINGS: JourneyForgeSettings = {
     httpReqDurationP95: 500,
     httpReqFailedRate: 0.01,
   },
+  execution: {
+    testEmail: '',
+    playwrightBaseUrl: '',
+    k6BaseUrl: '',
+  },
 };

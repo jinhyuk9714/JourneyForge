@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -9,12 +9,22 @@ import { describe, expect, it } from 'vitest';
 import { createJourneyForgeApp, createStorageRepository, generateK6, normalizeSession } from './index';
 import { loginSearchDetailSession } from './__fixtures__/loginSearchDetailSession';
 
+const expectedExecutionDefaults = {
+  testEmail: '',
+  playwrightBaseUrl: '',
+  k6BaseUrl: '',
+};
+
 const buildSettings = (overrides: Partial<JourneyForgeSettings> = {}): JourneyForgeSettings => ({
   ...DEFAULT_SETTINGS,
   ...overrides,
   k6Thresholds: {
     ...DEFAULT_SETTINGS.k6Thresholds,
     ...overrides.k6Thresholds,
+  },
+  execution: {
+    ...DEFAULT_SETTINGS.execution,
+    ...overrides.execution,
   },
 });
 
@@ -31,9 +41,15 @@ describe('settings integration', () => {
 
     const defaults = await repository.getSettings();
 
-    expect(defaults).toEqual(DEFAULT_SETTINGS);
+    expect(defaults).toEqual({
+      ...DEFAULT_SETTINGS,
+      execution: expectedExecutionDefaults,
+    });
     expect(existsSync(join(dataDir, 'settings.json'))).toBe(true);
-    expect(JSON.parse(readFileSync(join(dataDir, 'settings.json'), 'utf8'))).toEqual(DEFAULT_SETTINGS);
+    expect(JSON.parse(readFileSync(join(dataDir, 'settings.json'), 'utf8'))).toEqual({
+      ...DEFAULT_SETTINGS,
+      execution: expectedExecutionDefaults,
+    });
 
     const updated = buildSettings({
       analyticsPatterns: ['internal-metrics', 'collect'],
@@ -42,11 +58,47 @@ describe('settings integration', () => {
         httpReqDurationP95: 900,
         httpReqFailedRate: 0.05,
       },
+      execution: {
+        testEmail: 'tester@example.com',
+        playwrightBaseUrl: 'http://localhost:3000',
+        k6BaseUrl: 'http://localhost:3000',
+      },
     });
 
     await repository.saveSettings(updated);
 
     expect(await repository.getSettings()).toEqual(updated);
+  });
+
+  it('merges older settings.json files with new execution defaults', async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), 'journeyforge-settings-legacy-'));
+    writeFileSync(
+      join(dataDir, 'settings.json'),
+      `${JSON.stringify(
+        {
+          analyticsPatterns: ['legacy-metrics'],
+          maskEmailInputs: false,
+          k6Thresholds: {
+            httpReqDurationP95: 250,
+            httpReqFailedRate: 0.2,
+          },
+        },
+        null,
+        2,
+      )}\n`,
+      'utf8',
+    );
+    const repository = createStorageRepository({ dataDir });
+
+    expect(await repository.getSettings()).toEqual({
+      analyticsPatterns: ['legacy-metrics'],
+      maskEmailInputs: false,
+      k6Thresholds: {
+        httpReqDurationP95: 250,
+        httpReqFailedRate: 0.2,
+      },
+      execution: expectedExecutionDefaults,
+    });
   });
 
   it('filters custom analytics patterns during normalization', () => {

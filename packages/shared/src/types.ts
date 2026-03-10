@@ -212,4 +212,42 @@ export type JourneyForgeSettings = {
     httpReqDurationP95: number;
     httpReqFailedRate: number;
   };
+  execution: {
+    testEmail: string;
+    playwrightBaseUrl: string;
+    k6BaseUrl: string;
+  };
+};
+
+export type CredentialStatus = {
+  hasPlaywrightPassword: boolean;
+};
+
+export type SettingsPayload = {
+  settings: JourneyForgeSettings;
+  credentialStatus: CredentialStatus;
+};
+
+export type ExecutionTarget = 'playwright' | 'k6';
+
+export type ExecutionState = 'idle' | 'preparing' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+
+export type ExecutionLogEntry = {
+  id: string;
+  timestamp: number;
+  stream: 'stdout' | 'stderr' | 'system';
+  message: string;
+};
+
+export type ExecutionSnapshot = {
+  state: ExecutionState;
+  logs: ExecutionLogEntry[];
+  updatedAt: number;
+  runId?: string;
+  sessionId?: string;
+  target?: ExecutionTarget;
+  startedAt?: number;
+  exitCode?: number;
+  bundlePath?: string;
+  error?: string;
 };

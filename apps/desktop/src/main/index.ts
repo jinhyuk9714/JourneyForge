@@ -3,10 +3,13 @@ import { fileURLToPath } from 'node:url';
 
 import { app, BrowserWindow } from 'electron';
 
+import { registerCredentialsIpc } from './ipc/credentials.ipc';
+import { registerExecutionIpc } from './ipc/execution.ipc';
 import { registerExportIpc } from './ipc/export.ipc';
 import { registerRecordingIpc } from './ipc/recording.ipc';
 import { registerSettingsIpc } from './ipc/settings.ipc';
 import { registerSessionIpc } from './ipc/session.ipc';
+import { IPC_CHANNELS } from './ipc/channels';
 import { desktopApp } from './services/journeyForgeDesktopService';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -39,6 +42,13 @@ app.whenReady().then(async () => {
   registerSessionIpc();
   registerExportIpc();
   registerSettingsIpc();
+  registerExecutionIpc();
+  registerCredentialsIpc();
+  desktopApp.onExecutionUpdate((snapshot) => {
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(IPC_CHANNELS.executionUpdate, snapshot);
+    }
+  });
   await createWindow();
 
   app.on('activate', async () => {

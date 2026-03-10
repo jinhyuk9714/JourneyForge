@@ -7,4 +7,10 @@ export const IPC_CHANNELS = {
   exportsWrite: 'exports:write',
   settingsGet: 'settings:get',
   settingsUpdate: 'settings:update',
+  executionStart: 'execution:start',
+  executionStatus: 'execution:status',
+  executionCancel: 'execution:cancel',
+  executionUpdate: 'execution:update',
+  credentialsSetPlaywrightPassword: 'credentials:set-playwright-password',
+  credentialsClearPlaywrightPassword: 'credentials:clear-playwright-password',
 } as const;

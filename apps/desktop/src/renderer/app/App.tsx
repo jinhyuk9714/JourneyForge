@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { HomePage } from '../pages/HomePage';
 import { SettingsPage } from '../pages/SettingsPage';
+import { useExecution } from '../hooks/useExecution';
 import { useRecording } from '../hooks/useRecording';
 import { useSessions } from '../hooks/useSessions';
 
@@ -11,6 +12,7 @@ export const App = () => {
   const [view, setView] = useState<View>('home');
   const [baseUrl, setBaseUrl] = useState('http://localhost:3000/login');
   const { status, error, start, stop } = useRecording();
+  const { snapshot, error: executionError, start: startExecution, cancel: cancelExecution } = useExecution();
   const {
     sessions,
     selectedBundle,
@@ -31,6 +33,8 @@ export const App = () => {
     const bundle = await stop(sessionId);
     await upsertBundle(bundle);
   };
+
+  const errorMessage = error ?? executionError;
 
   return (
     <div className="min-h-screen bg-app px-6 py-6 font-body text-ink">
@@ -58,8 +62,10 @@ export const App = () => {
           </nav>
         </header>
 
-        {error ? (
-          <div className="mb-4 rounded-2xl border border-ember/20 bg-ember/10 px-4 py-3 text-sm text-ember">{error}</div>
+        {errorMessage ? (
+          <div className="mb-4 rounded-2xl border border-ember/20 bg-ember/10 px-4 py-3 text-sm text-ember">
+            {errorMessage}
+          </div>
         ) : null}
 
         {exportMessage ? (
@@ -76,6 +82,7 @@ export const App = () => {
           <HomePage
             baseUrl={baseUrl}
             status={status}
+            executionSnapshot={snapshot}
             sessions={sessions}
             selectedSessionId={selectedSessionId}
             selectedBundle={selectedBundle}
@@ -100,6 +107,15 @@ export const App = () => {
                 return;
               }
               void exportBundle(selectedSessionId);
+            }}
+            onRun={(target) => {
+              if (!selectedSessionId) {
+                return;
+              }
+              void startExecution(selectedSessionId, target);
+            }}
+            onCancel={(runId) => {
+              void cancelExecution(runId);
             }}
           />
         ) : (

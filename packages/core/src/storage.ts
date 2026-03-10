@@ -47,6 +47,22 @@ const exportDir = (dataDir: string) => join(dataDir, 'exports');
 const settingsFile = (dataDir: string) => join(dataDir, 'settings.json');
 const bundleDir = (dataDir: string, sessionId: string) => join(exportDir(dataDir), `${sessionId}-bundle`);
 
+const mergeSettingsWithDefaults = (
+  candidate: Partial<JourneyForgeSettings> | undefined,
+  defaults: JourneyForgeSettings,
+): JourneyForgeSettings => ({
+  ...defaults,
+  ...candidate,
+  k6Thresholds: {
+    ...defaults.k6Thresholds,
+    ...candidate?.k6Thresholds,
+  },
+  execution: {
+    ...defaults.execution,
+    ...candidate?.execution,
+  },
+});
+
 export type StorageRepository = ReturnType<typeof createStorageRepository>;
 
 export const createStorageRepository = (options: StorageRepositoryOptions = {}) => {
@@ -57,7 +73,14 @@ export const createStorageRepository = (options: StorageRepositoryOptions = {}) 
     const target = settingsFile(dataDir);
 
     try {
-      return await readJson<JourneyForgeSettings>(target);
+      const persisted = await readJson<Partial<JourneyForgeSettings>>(target);
+      const normalized = mergeSettingsWithDefaults(persisted, defaultSettings);
+
+      if (JSON.stringify(persisted) !== JSON.stringify(normalized)) {
+        await writeJson(target, normalized);
+      }
+
+      return normalized;
     } catch (error) {
       const candidate = defaultSettings;
       if (!candidate || !(error instanceof Error && 'code' in error && error.code === 'ENOENT')) {
@@ -74,7 +97,7 @@ export const createStorageRepository = (options: StorageRepositoryOptions = {}) 
       return getSettings();
     },
     async saveSettings(settings: JourneyForgeSettings) {
-      await writeJson(settingsFile(dataDir), settings);
+      await writeJson(settingsFile(dataDir), mergeSettingsWithDefaults(settings, defaultSettings));
     },
     async saveSession(session: RecordedSession) {
       await writeJson(join(sessionDir(dataDir, session.id), 'session.json'), session);
