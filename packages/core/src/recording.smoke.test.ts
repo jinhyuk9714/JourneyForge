@@ -81,6 +81,17 @@ describe('recording smoke', () => {
     expect(exportedPaths).toHaveLength(2);
     expect(readFileSync(exportedPaths[0]!, 'utf8')).toContain("test('smoke-journey'");
 
+    const bundleExport = await (
+      app as unknown as {
+        exportBundle(sessionId: string): Promise<{ bundlePath: string; exportedPaths: string[] }>;
+      }
+    ).exportBundle(bundle.session.id);
+    expect(readFileSync(join(bundleExport.bundlePath, 'README.md'), 'utf8')).toContain('k6 CLI');
+    expect(readFileSync(join(bundleExport.bundlePath, 'playwright', 'tests', 'smoke-journey.spec.ts'), 'utf8')).toContain(
+      "await page.goto('/login');",
+    );
+    expect(readFileSync(join(bundleExport.bundlePath, 'k6', 'smoke-journey.js'), 'utf8')).toContain('/api/products/42');
+
     await app.dispose();
   }, 60_000);
 
@@ -203,6 +214,16 @@ describe('recording smoke', () => {
     expect(exportedPaths).toHaveLength(2);
     expect(readFileSync(exportedPaths[1]!, 'utf8')).toContain('http.post');
 
+    const bundleExport = await (
+      app as unknown as {
+        exportBundle(sessionId: string): Promise<{ bundlePath: string; exportedPaths: string[] }>;
+      }
+    ).exportBundle(bundle.session.id);
+    expect(readFileSync(join(bundleExport.bundlePath, 'playwright', 'tests', 'create-post-journey.spec.ts'), 'utf8')).toContain(
+      "await page.goto('/login');",
+    );
+    expect(readFileSync(join(bundleExport.bundlePath, 'k6', 'create-post-journey.js'), 'utf8')).toContain('http.post');
+
     await app.dispose();
   }, 60_000);
 
@@ -258,6 +279,16 @@ describe('recording smoke', () => {
     const exportedPaths = await app.exportArtifacts(bundle.session.id, ['flow-doc', 'k6']);
     expect(exportedPaths).toHaveLength(2);
     expect(readFileSync(exportedPaths[1]!, 'utf8')).toContain('http.patch');
+
+    const bundleExport = await (
+      app as unknown as {
+        exportBundle(sessionId: string): Promise<{ bundlePath: string; exportedPaths: string[] }>;
+      }
+    ).exportBundle(bundle.session.id);
+    expect(readFileSync(join(bundleExport.bundlePath, 'playwright', 'tests', 'update-post-journey.spec.ts'), 'utf8')).toContain(
+      "await page.goto('/login');",
+    );
+    expect(readFileSync(join(bundleExport.bundlePath, 'k6', 'update-post-journey.js'), 'utf8')).toContain('http.patch');
 
     await app.dispose();
   }, 60_000);

@@ -15,6 +15,7 @@ type HomePageProps = {
   onStop(sessionId: string): void;
   onSelectSession(sessionId: string): void;
   onExport(artifactKinds: ArtifactKind[]): void;
+  onExportBundle(): void;
 };
 
 export const HomePage = ({
@@ -28,6 +29,7 @@ export const HomePage = ({
   onStop,
   onSelectSession,
   onExport,
+  onExportBundle,
 }: HomePageProps) => (
   <div className="space-y-6">
     <RecordPanel
@@ -40,7 +42,7 @@ export const HomePage = ({
 
     <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
       <SessionList sessions={sessions} selectedSessionId={selectedSessionId} onSelect={onSelectSession} />
-      <SessionDetailPage bundle={selectedBundle} onExport={onExport} />
+      <SessionDetailPage bundle={selectedBundle} onExport={onExport} onExportBundle={onExportBundle} />
     </div>
   </div>
 );

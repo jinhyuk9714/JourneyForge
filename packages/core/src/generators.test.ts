@@ -16,7 +16,7 @@ describe('artifact generators', () => {
       "import { expect, test } from '@playwright/test';
 
       test('login-search-detail', async ({ page }) => {
-        await page.goto('http://localhost:3000/login');
+        await page.goto('/login');
         await page.getByLabel('Email').fill(process.env.TEST_EMAIL ?? '');
         await page.getByLabel('Password').fill(process.env.TEST_PASSWORD ?? '');
         await page.getByRole('button', { name: '로그인' }).click();

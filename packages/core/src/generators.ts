@@ -63,11 +63,12 @@ const selectK6Candidates = (journey: NormalizedJourney) => {
 };
 
 export const generatePlaywright = (journey: NormalizedJourney): string => {
+  const initialPath = new URL(journey.steps[0]?.pageUrl ?? journey.baseUrl).pathname || '/';
   const lines = [
     "import { expect, test } from '@playwright/test';",
     '',
     `test(${quoteForCode(journey.slug)}, async ({ page }) => {`,
-    `  await page.goto(${quoteForCode(journey.baseUrl + new URL(journey.steps[0]?.pageUrl ?? journey.baseUrl).pathname)});`,
+    `  await page.goto(${quoteForCode(initialPath)});`,
   ];
 
   for (const step of journey.steps) {

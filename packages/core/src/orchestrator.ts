@@ -1,6 +1,7 @@
 import { DEFAULT_SETTINGS } from '@journeyforge/shared';
 import type {
   ArtifactKind,
+  ExportResult,
   JourneyForgeSettings,
   RecordedSession,
   SessionBundle,
@@ -85,6 +86,9 @@ export const createJourneyForgeApp = (options: JourneyForgeAppOptions = {}) => {
     },
     async exportArtifacts(sessionId: string, artifactKinds: ArtifactKind[]) {
       return repository.exportArtifacts(sessionId, artifactKinds);
+    },
+    async exportBundle(sessionId: string, artifactKinds?: ArtifactKind[]): Promise<ExportResult> {
+      return repository.exportBundle(sessionId, artifactKinds);
     },
     async dispose() {
       await recorder.dispose();

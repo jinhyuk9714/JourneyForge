@@ -39,6 +39,11 @@ export const useSessions = () => {
       setExportMessage(exportedPaths.length > 0 ? `Exported ${exportedPaths.length} file(s)` : 'No files exported');
       return exportedPaths;
     },
+    async exportBundle(sessionId: string) {
+      const { bundlePath } = await window.journeyforge.exports.write({ sessionId, mode: 'bundle' });
+      setExportMessage(bundlePath ? `Bundle exported to ${bundlePath}` : 'Bundle export failed');
+      return bundlePath;
+    },
     dismissExportMessage() {
       setExportMessage(null);
     },

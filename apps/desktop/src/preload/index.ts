@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 import type {
   ArtifactKind,
+  ExportResult,
+  ExportWriteInput,
   JourneyForgeSettings,
   RecorderStatus,
   SessionBundle,
@@ -21,7 +23,7 @@ export type JourneyForgeDesktopApi = {
     get(input: { sessionId: string }): Promise<SessionBundle>;
   };
   exports: {
-    write(input: { sessionId: string; artifactKinds: ArtifactKind[] }): Promise<{ exportedPaths: string[] }>;
+    write(input: ExportWriteInput): Promise<ExportResult>;
   };
   settings: {
     get(): Promise<JourneyForgeSettings>;

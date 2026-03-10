@@ -129,6 +129,7 @@ export type RecordedSession = {
 };
 
 export type ArtifactKind = 'playwright' | 'flow-doc' | 'k6';
+export type ExportMode = 'artifacts' | 'bundle';
 
 export type GeneratedArtifact = {
   kind: ArtifactKind;
@@ -147,6 +148,39 @@ export type SessionSummary = {
   endedAt: number;
   stepCount: number;
   artifactKinds: ArtifactKind[];
+};
+
+export type ExportBundleManifest = {
+  sessionId: string;
+  journeySlug: string;
+  generatedAt: number;
+  artifactKinds: ArtifactKind[];
+  entries: {
+    readme: string;
+    manifest: string;
+    docs?: string;
+    playwright?: {
+      packageJson: string;
+      config: string;
+      envExample: string;
+      testFile: string;
+    };
+    k6?: {
+      envExample: string;
+      script: string;
+    };
+  };
+};
+
+export type ExportResult = {
+  exportedPaths: string[];
+  bundlePath?: string;
+};
+
+export type ExportWriteInput = {
+  sessionId: string;
+  mode?: ExportMode;
+  artifactKinds?: ArtifactKind[];
 };
 
 export type SessionBundle = {

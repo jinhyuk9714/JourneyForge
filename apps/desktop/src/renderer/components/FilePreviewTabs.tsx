@@ -7,9 +7,10 @@ import { artifactLabel, firstArtifactKind } from '../lib/artifacts';
 type FilePreviewTabsProps = {
   artifacts: GeneratedArtifact[];
   onExport(artifactKinds: ArtifactKind[]): void;
+  onExportBundle(): void;
 };
 
-export const FilePreviewTabs = ({ artifacts, onExport }: FilePreviewTabsProps) => {
+export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle }: FilePreviewTabsProps) => {
   const [activeKind, setActiveKind] = useState<ArtifactKind>(firstArtifactKind(artifacts));
   const activeArtifact = artifacts.find((artifact) => artifact.kind === activeKind) ?? artifacts[0];
 
@@ -28,13 +29,22 @@ export const FilePreviewTabs = ({ artifacts, onExport }: FilePreviewTabsProps) =
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Generated output</p>
           <h3 className="font-display text-2xl text-ink">Preview and export</h3>
         </div>
-        <button
-          type="button"
-          className="rounded-2xl bg-gold px-4 py-2 text-sm font-semibold text-ink transition hover:bg-gold/85"
-          onClick={() => onExport([activeKind])}
-        >
-          현재 탭 내보내기
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="rounded-2xl border border-ink/15 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-sand"
+            onClick={onExportBundle}
+          >
+            실행 번들 내보내기
+          </button>
+          <button
+            type="button"
+            className="rounded-2xl bg-gold px-4 py-2 text-sm font-semibold text-ink transition hover:bg-gold/85"
+            onClick={() => onExport([activeKind])}
+          >
+            현재 탭 내보내기
+          </button>
+        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">

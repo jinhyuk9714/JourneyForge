@@ -19,6 +19,7 @@ export const App = () => {
     selectSession,
     upsertBundle,
     exportArtifacts,
+    exportBundle,
     dismissExportMessage,
   } = useSessions();
 
@@ -93,6 +94,12 @@ export const App = () => {
                 return;
               }
               void exportArtifacts(selectedSessionId, artifactKinds);
+            }}
+            onExportBundle={() => {
+              if (!selectedSessionId) {
+                return;
+              }
+              void exportBundle(selectedSessionId);
             }}
           />
         ) : (

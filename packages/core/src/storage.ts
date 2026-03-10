@@ -1,9 +1,10 @@
-import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 import { DEFAULT_SETTINGS } from '@journeyforge/shared';
 import type {
   ArtifactKind,
+  ExportResult,
   GeneratedArtifact,
   JourneyForgeSettings,
   NormalizedJourney,
@@ -11,6 +12,8 @@ import type {
   SessionBundle,
   SessionSummary,
 } from '@journeyforge/shared';
+
+import { buildExportBundle } from './bundleExport';
 
 type StorageRepositoryOptions = {
   dataDir?: string;
@@ -42,6 +45,7 @@ const sessionDir = (dataDir: string, sessionId: string) => join(dataDir, 'sessio
 const generatedDir = (dataDir: string) => join(dataDir, 'generated');
 const exportDir = (dataDir: string) => join(dataDir, 'exports');
 const settingsFile = (dataDir: string) => join(dataDir, 'settings.json');
+const bundleDir = (dataDir: string, sessionId: string) => join(exportDir(dataDir), `${sessionId}-bundle`);
 
 export type StorageRepository = ReturnType<typeof createStorageRepository>;
 
@@ -128,6 +132,32 @@ export const createStorageRepository = (options: StorageRepositoryOptions = {}) 
         exportedPaths.push(destinationPath);
       }
       return exportedPaths;
+    },
+    async exportBundle(sessionId: string, artifactKinds?: ArtifactKind[]): Promise<ExportResult> {
+      const bundle = await this.getSessionBundle(sessionId);
+      const outputDirectory = bundleDir(dataDir, sessionId);
+      await rm(outputDirectory, { recursive: true, force: true });
+      await mkdir(outputDirectory, { recursive: true });
+
+      const { files } = buildExportBundle({
+        session: bundle.session,
+        journey: bundle.journey,
+        artifacts: bundle.artifacts,
+        artifactKinds,
+      });
+
+      const exportedPaths: string[] = [];
+      for (const file of files) {
+        const destinationPath = join(outputDirectory, file.relativePath);
+        await ensureParent(destinationPath);
+        await writeFile(destinationPath, file.content, 'utf8');
+        exportedPaths.push(destinationPath);
+      }
+
+      return {
+        bundlePath: outputDirectory,
+        exportedPaths,
+      };
     },
   };
 };

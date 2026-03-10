@@ -36,8 +36,10 @@ const artifacts: GeneratedArtifact[] = [
 describe('FilePreviewTabs', () => {
   it('switches tabs and shows skipped artifact reasons', () => {
     const onExport = vi.fn();
+    const onExportBundle = vi.fn();
+    const props = { artifacts, onExport, onExportBundle } as any;
 
-    render(<FilePreviewTabs artifacts={artifacts} onExport={onExport} />);
+    render(<FilePreviewTabs {...props} />);
 
     expect(screen.getByText("test('login-search-detail', async () => {})")).toBeInTheDocument();
 
@@ -49,5 +51,8 @@ describe('FilePreviewTabs', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '현재 탭 내보내기' }));
     expect(onExport).toHaveBeenCalledWith(['k6']);
+
+    fireEvent.click(screen.getByRole('button', { name: '실행 번들 내보내기' }));
+    expect(onExportBundle).toHaveBeenCalledTimes(1);
   });
 });
