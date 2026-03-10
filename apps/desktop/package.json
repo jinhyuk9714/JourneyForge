@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "out/main/index.js",
   "scripts": {
+    "predev": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "test": "vitest run --passWithNoTests",
