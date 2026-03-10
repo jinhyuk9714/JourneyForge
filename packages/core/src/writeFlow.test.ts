@@ -12,11 +12,16 @@ import { updatePostSession } from './__fixtures__/updatePostSession';
 const intentOf = (step: unknown) => (step as { intent?: string }).intent;
 const payloadOf = (api: unknown) => (api as { payloadTemplate?: Record<string, string | number | boolean> }).payloadTemplate;
 const statusesOf = (api: unknown) => (api as { expectedStatuses?: number[] }).expectedStatuses;
+const explanationOf = (value: unknown) => (value as { explanation?: string[] }).explanation ?? [];
+const k6ReasonsOf = (journey: unknown) =>
+  ((journey as { suggestions?: { k6CandidateReasons?: Array<{ scenarioSlug: string; reasons: string[] }> } }).suggestions
+    ?.k6CandidateReasons ?? []);
 
 describe('write-flow coverage', () => {
   it('classifies create flows and derives safe payload templates', () => {
     const journey = normalizeSession(createPostSession);
     const createApi = journey.coreApis.find((api) => api.method === 'POST' && api.path === '/api/posts');
+    const createStep = journey.steps.find((step) => step.title === 'Create post');
 
     expect(journey.steps.map(intentOf)).toEqual(['navigation', 'auth', 'navigation', 'create']);
     expect(journey.steps.map((step) => step.title)).toEqual([
@@ -30,13 +35,27 @@ describe('write-flow coverage', () => {
       content: 'sample content',
     });
     expect(statusesOf(createApi)).toEqual([201]);
+    expect(explanationOf(createStep)).toContain(
+      'Classified as create because POST /api/posts is a write API attached to this step.',
+    );
+    expect(explanationOf(createApi)).toContain(
+      'Remained a load-test candidate because it is a non-auth business API with a successful response.',
+    );
+    expect(k6ReasonsOf(journey)).toContainEqual({
+      scenarioSlug: 'post-posts',
+      reasons: [
+        'Selected because it is a write API and write journeys take priority for k6 output.',
+        'Auth APIs were excluded from k6 candidate selection.',
+      ],
+    });
   });
 
   it('classifies update flows and derives safe payload templates', () => {
     const journey = normalizeSession(updatePostSession);
     const updateApi = journey.coreApis.find((api) => api.method === 'PATCH' && api.path === '/api/posts/99');
+    const updateStep = journey.steps.find((step) => step.title === 'Update post');
 
-    expect(journey.steps.map(intentOf)).toEqual(['navigation', 'auth', 'navigation', 'navigation', 'update']);
+    expect(journey.steps.map(intentOf)).toEqual(['navigation', 'auth', 'read', 'navigation', 'update']);
     expect(journey.steps.map((step) => step.title)).toEqual([
       'Open login page',
       'Login',
@@ -49,6 +68,19 @@ describe('write-flow coverage', () => {
       content: 'sample content',
     });
     expect(statusesOf(updateApi)).toEqual([200]);
+    expect(explanationOf(updateStep)).toContain(
+      'Classified as update because PATCH /api/posts/99 is a write API attached to this step.',
+    );
+    expect(explanationOf(updateApi)).toContain(
+      'Attached to this step because the request started before the next step.',
+    );
+    expect(k6ReasonsOf(journey)).toContainEqual({
+      scenarioSlug: 'patch-post-99',
+      reasons: [
+        'Selected because it is a write API and write journeys take priority for k6 output.',
+        'Auth APIs were excluded from k6 candidate selection.',
+      ],
+    });
   });
 
   it('renders create-flow artifacts with write payload placeholders and 2xx checks', () => {
@@ -76,25 +108,48 @@ describe('write-flow coverage', () => {
       
       ## Step 1. Open login page
       - Action: navigation to http://localhost:3000/login
+      - Why:
+        - Identified as a standalone navigation event.
       
       ## Step 2. Login
       - Action: click "로그인"
+      - Why:
+        - Grouped 2 input events with the triggering click before the next step started.
+        - Classified as auth because POST /api/auth/login matched login heuristics.
       - API:
         - POST /api/auth/login (200, 140ms)
+          - Why: Captured as xhr.
+          - Why: Attached to this step because the request started before the next step.
+          - Why: Excluded from load-test candidates because auth APIs are not selected for k6 output.
       
       ## Step 3. Open new post page
       - Action: click "게시글 작성"
+      - Why:
+        - Grouped the triggering click with the following navigation event.
+        - Classified as navigation because the resulting path opened a new-resource page.
       
       ## Step 4. Create post
       - Action: click "등록"
+      - Why:
+        - Grouped 2 input events with the triggering click before the next step started.
+        - Classified as create because POST /api/posts is a write API attached to this step.
       - Payload fields: title, content
       - API:
         - POST /api/posts (201, 180ms)
+          - Why: Captured as fetch.
+          - Why: Attached to this step because the request started before the next step.
+          - Why: Remained a load-test candidate because it is a non-auth business API with a successful response.
         - GET /api/posts/101 (200, 80ms)
+          - Why: Captured as fetch.
+          - Why: Attached to this step because the request started before the next step.
+          - Why: Remained a load-test candidate because it is a non-auth business API with a successful response.
       
       ## Load test candidates
       - POST /api/posts
+        - Why selected: Selected because it is a write API and write journeys take priority for k6 output.
+        - Why selected: Auth APIs were excluded from k6 candidate selection.
       - GET /api/posts/101
+        - Why selected: Paired with the related detail read API after selecting the write candidate.
       "
     `);
 
@@ -169,28 +224,54 @@ describe('write-flow coverage', () => {
       
       ## Step 1. Open login page
       - Action: navigation to http://localhost:3000/login
+      - Why:
+        - Identified as a standalone navigation event.
       
       ## Step 2. Login
       - Action: click "로그인"
+      - Why:
+        - Grouped 2 input events with the triggering click before the next step started.
+        - Classified as auth because POST /api/auth/login matched login heuristics.
       - API:
         - POST /api/auth/login (200, 140ms)
+          - Why: Captured as xhr.
+          - Why: Attached to this step because the request started before the next step.
+          - Why: Excluded from load-test candidates because auth APIs are not selected for k6 output.
       
       ## Step 3. Open post detail
       - Action: click "JourneyForge roadmap"
+      - Why:
+        - Grouped the triggering click with the following detail navigation event.
+        - Classified as read because the resulting navigation path matched a detail view pattern.
       
       ## Step 4. Open edit post page
       - Action: click "수정하기"
+      - Why:
+        - Grouped the triggering click with the following navigation event.
+        - Classified as navigation because the resulting path opened an edit-resource page.
       
       ## Step 5. Update post
       - Action: click "저장"
+      - Why:
+        - Grouped 2 input events with the triggering click before the next step started.
+        - Classified as update because PATCH /api/posts/99 is a write API attached to this step.
       - Payload fields: title, content
       - API:
         - PATCH /api/posts/99 (200, 180ms)
+          - Why: Captured as fetch.
+          - Why: Attached to this step because the request started before the next step.
+          - Why: Remained a load-test candidate because it is a non-auth business API with a successful response.
         - GET /api/posts/99 (200, 80ms)
+          - Why: Captured as fetch.
+          - Why: Attached to this step because the request started before the next step.
+          - Why: Remained a load-test candidate because it is a non-auth business API with a successful response.
       
       ## Load test candidates
       - PATCH /api/posts/99
+        - Why selected: Selected because it is a write API and write journeys take priority for k6 output.
+        - Why selected: Auth APIs were excluded from k6 candidate selection.
       - GET /api/posts/99
+        - Why selected: Paired with the related detail read API after selecting the write candidate.
       "
     `);
 

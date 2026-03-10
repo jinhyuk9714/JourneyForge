@@ -89,6 +89,7 @@ export type ApiCall = {
   candidateForLoadTest: boolean;
   payloadTemplate?: Record<string, string | number | boolean>;
   expectedStatuses?: number[];
+  explanation: string[];
 };
 
 export type JourneyStepIntent = 'read' | 'create' | 'update' | 'auth' | 'navigation';
@@ -103,6 +104,12 @@ export type JourneyStep = {
   actionSummary: string;
   actions: Array<ClickEvent | InputEvent | SubmitEvent | NavigationEvent>;
   apis: ApiCall[];
+  explanation: string[];
+};
+
+export type K6CandidateReason = {
+  scenarioSlug: string;
+  reasons: string[];
 };
 
 export type NormalizedJourney = {
@@ -115,6 +122,7 @@ export type NormalizedJourney = {
   suggestions: {
     playwright: boolean;
     k6Candidates: string[];
+    k6CandidateReasons: K6CandidateReason[];
   };
 };
 

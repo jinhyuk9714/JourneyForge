@@ -65,6 +65,7 @@ const buildBundle = (sessionId: string): SessionBundle => ({
     suggestions: {
       playwright: true,
       k6Candidates: ['get-products'],
+      k6CandidateReasons: [],
     },
   },
   artifacts: [],

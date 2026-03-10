@@ -25,6 +25,9 @@ import type {
 } from '@journeyforge/shared';
 
 type ActionEvent = ClickEvent | InputEvent | NavigationEvent | SubmitEvent;
+type ApiDraft = ApiCall & {
+  transport: 'fetch' | 'xhr';
+};
 
 type StepDraft = {
   id: string;
@@ -78,6 +81,8 @@ const isActionEvent = (event: RawEvent): event is ActionEvent =>
   event.type === 'submit';
 
 const isAuthApi = (api: ApiCall): boolean => api.path.includes('/auth/') || api.path.includes('/login');
+const formatCount = (count: number, singular: string, plural: string): string =>
+  `${count} ${count === 1 ? singular : plural}`;
 
 const buildPayloadTemplate = (actions: ActionEvent[]): Record<string, string> | undefined => {
   const entries = actions
@@ -98,7 +103,7 @@ const buildPayloadTemplate = (actions: ActionEvent[]): Record<string, string> | 
   return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 };
 
-const buildApiCalls = (events: RawEvent[], settings: JourneyForgeSettings): ApiCall[] => {
+const buildApiCalls = (events: RawEvent[], settings: JourneyForgeSettings): ApiDraft[] => {
   const requestMap = new Map<string, NetworkRequestEvent>();
   const responseMap = new Map<string, NetworkResponseEvent>();
 
@@ -112,7 +117,7 @@ const buildApiCalls = (events: RawEvent[], settings: JourneyForgeSettings): ApiC
     }
   }
 
-  const rawApis: ApiCall[] = [];
+  const rawApis: ApiDraft[] = [];
   for (const request of requestMap.values()) {
     if (!['fetch', 'xhr'].includes(request.resourceType)) {
       continue;
@@ -143,12 +148,14 @@ const buildApiCalls = (events: RawEvent[], settings: JourneyForgeSettings): ApiC
       isWrite: !['GET', 'HEAD'].includes(request.method.toUpperCase()),
       candidateForLoadTest: response.status < 500,
       expectedStatuses: expectedStatusesFor(response.status),
+      explanation: [],
+      transport: request.resourceType as 'fetch' | 'xhr',
     });
   }
 
   rawApis.sort((left, right) => left.timestamp - right.timestamp);
 
-  const deduped = new Map<string, ApiCall>();
+  const deduped = new Map<string, ApiDraft>();
   for (const api of rawApis) {
     const key = `${api.method}:${api.url}:${api.status}`;
     const existing = deduped.get(key);
@@ -220,7 +227,9 @@ const buildClickTitle = (event: ClickEvent, pendingInputs: InputEvent[]): string
   return `Click ${event.text ?? event.locator.value}`;
 };
 
-const classifyStep = (step: StepDraft & { apis: ApiCall[] }): Pick<StepDraft, 'title' | 'intent'> => {
+const classifyStep = (
+  step: StepDraft & { apis: ApiDraft[] },
+): Pick<StepDraft, 'title' | 'intent'> & { explanation: string[] } => {
   const clickText = step.actions
     .filter((action): action is ClickEvent => action.type === 'click')
     .map((action) => action.text ?? action.locator.value)
@@ -236,39 +245,32 @@ const classifyStep = (step: StepDraft & { apis: ApiCall[] }): Pick<StepDraft, 't
   const writeApi = step.apis.find((api) => api.isWrite && !isAuthApi(api));
   const authApi = step.apis.find((api) => isAuthApi(api));
   const readApi = step.apis.find((api) => !api.isWrite);
+  const inputCount = step.actions.filter((action) => action.type === 'input').length;
+  const hasTriggerClick = step.actions.some((action) => action.type === 'click' || action.type === 'submit');
+  const hasNavigation = step.actions.some((action) => action.type === 'navigation');
+  const explanations: string[] = [];
+  const isStandaloneNavigation = step.actions.length === 1 && step.actions[0]?.type === 'navigation';
+
+  if (isStandaloneNavigation) {
+    explanations.push('Identified as a standalone navigation event.');
+  } else if (hasTriggerClick && inputCount > 0) {
+    explanations.push(
+      `Grouped ${formatCount(inputCount, 'input event', 'input events')} with the triggering click before the next step started.`,
+    );
+  } else if (hasTriggerClick && hasNavigation && navigationPath && /\/\d+$/.test(navigationPath)) {
+    explanations.push('Grouped the triggering click with the following detail navigation event.');
+  } else if (hasTriggerClick && hasNavigation) {
+    explanations.push('Grouped the triggering click with the following navigation event.');
+  }
 
   if (writeApi) {
     return {
       intent: writeApi.method === 'POST' ? 'create' : 'update',
       title: `${writeApi.method === 'POST' ? 'Create' : 'Update'} ${resourceLabel(writeApi.path)}`,
-    };
-  }
-
-  if (readApi) {
-    if (SEARCH_FIELD_PATTERN.test(clickText) || inputKeys.some((key) => SEARCH_FIELD_PATTERN.test(key))) {
-      return {
-        intent: 'read',
-        title: `Search ${baseResourceSegment(readApi.path).replace(/[-_]/g, ' ')}`,
-      };
-    }
-
-    if (navigationPath && /\/\d+$/.test(navigationPath)) {
-      return {
-        intent: 'read',
-        title: `Open ${resourceLabel(navigationPath)} detail`,
-      };
-    }
-
-    return {
-      intent: 'read',
-      title: step.title,
-    };
-  }
-
-  if (authApi || clickText.includes('로그인') || clickText.includes('login')) {
-    return {
-      intent: 'auth',
-      title: 'Login',
+      explanation: [
+        ...explanations,
+        `Classified as ${writeApi.method === 'POST' ? 'create' : 'update'} because ${writeApi.method} ${writeApi.path} is a write API attached to this step.`,
+      ],
     };
   }
 
@@ -276,6 +278,10 @@ const classifyStep = (step: StepDraft & { apis: ApiCall[] }): Pick<StepDraft, 't
     return {
       intent: 'navigation',
       title: `Open new ${resourceLabel(navigationPath)} page`,
+      explanation: [
+        ...explanations,
+        'Classified as navigation because the resulting path opened a new-resource page.',
+      ],
     };
   }
 
@@ -283,6 +289,62 @@ const classifyStep = (step: StepDraft & { apis: ApiCall[] }): Pick<StepDraft, 't
     return {
       intent: 'navigation',
       title: `Open edit ${resourceLabel(navigationPath)} page`,
+      explanation: [
+        ...explanations,
+        'Classified as navigation because the resulting path opened an edit-resource page.',
+      ],
+    };
+  }
+
+  if (SEARCH_FIELD_PATTERN.test(clickText) || inputKeys.some((key) => SEARCH_FIELD_PATTERN.test(key))) {
+    return {
+      intent: 'read',
+      title: `Search ${baseResourceSegment((readApi ?? step.apis[0])?.path ?? '/products').replace(/[-_]/g, ' ')}`,
+      explanation: [
+        ...explanations,
+        'Classified as read because search input heuristics matched the attached read API.',
+      ],
+    };
+  }
+
+  if (navigationPath && /\/\d+$/.test(navigationPath)) {
+    return {
+      intent: 'read',
+      title: `Open ${resourceLabel(navigationPath)} detail`,
+      explanation: [
+        ...explanations,
+        'Classified as read because the resulting navigation path matched a detail view pattern.',
+      ],
+    };
+  }
+
+  if (authApi || clickText.includes('로그인') || clickText.includes('login')) {
+    return {
+      intent: 'auth',
+      title: 'Login',
+      explanation: [
+        ...explanations,
+        `Classified as auth because ${(authApi ?? step.apis[0])?.method ?? 'POST'} ${(authApi ?? step.apis[0])?.path ?? '/api/auth/login'} matched login heuristics.`,
+      ],
+    };
+  }
+
+  if (readApi) {
+    return {
+      intent: 'read',
+      title: step.title,
+      explanation: [
+        ...explanations,
+        'Classified as read because a successful read API was attached to this step.',
+      ],
+    };
+  }
+
+  if (isStandaloneNavigation) {
+    return {
+      intent: 'navigation',
+      title: step.title,
+      explanation: explanations,
     };
   }
 
@@ -290,12 +352,20 @@ const classifyStep = (step: StepDraft & { apis: ApiCall[] }): Pick<StepDraft, 't
     return {
       intent: 'navigation',
       title: buildNavigationTitle(step.actions.find((action): action is NavigationEvent => action.type === 'navigation')!),
+      explanation: [
+        ...explanations,
+        'Classified as navigation because a navigation event completed the step.',
+      ],
     };
   }
 
   return {
     intent: 'read',
     title: step.title,
+    explanation: [
+      ...explanations,
+      'Classified as read because the step ended with a non-navigation user action.',
+    ],
   };
 };
 
@@ -392,21 +462,48 @@ const buildActionSteps = (session: RecordedSession): StepDraft[] => {
   return steps;
 };
 
-const attachApisToSteps = (steps: StepDraft[], apis: ApiCall[]) =>
+const buildApiExplanation = (api: ApiDraft): string[] => {
+  const explanations = [`Captured as ${api.transport}.`, 'Attached to this step because the request started before the next step.'];
+
+  if (isAuthApi(api)) {
+    explanations.push('Excluded from load-test candidates because auth APIs are not selected for k6 output.');
+    return explanations;
+  }
+
+  if (api.candidateForLoadTest) {
+    explanations.push(
+      'Remained a load-test candidate because it is a non-auth business API with a successful response.',
+    );
+    return explanations;
+  }
+
+  explanations.push(
+    'Excluded from load-test candidates because the response status was not suitable for baseline k6 generation.',
+  );
+  return explanations;
+};
+
+const attachApisToSteps = (steps: StepDraft[], apis: ApiDraft[]) =>
   steps.map((step, index) => {
     const nextStep = steps[index + 1];
     const upperBound = nextStep ? nextStep.startedAt : Number.POSITIVE_INFINITY;
     const payloadTemplate = buildPayloadTemplate(step.actions);
     const stepApis = apis
       .filter((api) => api.timestamp >= step.startedAt - 50 && api.timestamp < upperBound)
-      .map((api) =>
-        api.isWrite && payloadTemplate && !isAuthApi(api)
-          ? {
-              ...api,
-              payloadTemplate,
-            }
-          : api,
-      );
+      .map((api) => {
+        const withPayload =
+          api.isWrite && payloadTemplate && !isAuthApi(api)
+            ? {
+                ...api,
+                payloadTemplate,
+              }
+            : api;
+
+        return {
+          ...withPayload,
+          explanation: buildApiExplanation(withPayload),
+        };
+      });
     const classified = classifyStep({
       ...step,
       apis: stepApis,
@@ -419,7 +516,7 @@ const attachApisToSteps = (steps: StepDraft[], apis: ApiCall[]) =>
     };
   });
 
-const pickK6Candidates = (apis: ApiCall[]): ApiCall[] => {
+const pickK6Candidates = (apis: ApiCall[]): { candidates: ApiCall[]; reasons: NormalizedJourney['suggestions']['k6CandidateReasons'] } => {
   const loadCandidates = apis.filter((api) => api.candidateForLoadTest);
   const preferredWrite = loadCandidates.find(
     (api) => api.isWrite && !isAuthApi(api) && WRITE_METHODS.has(api.method),
@@ -439,12 +536,35 @@ const pickK6Candidates = (apis: ApiCall[]): ApiCall[] => {
       return api.path.startsWith(preferredWrite.path);
     });
 
-    return [preferredWrite, relatedRead].filter((api): api is ApiCall => Boolean(api)).slice(0, 2);
+    const candidates = [preferredWrite, relatedRead].filter((api): api is ApiCall => Boolean(api)).slice(0, 2);
+    return {
+      candidates,
+      reasons: candidates.map((api, index) => ({
+        scenarioSlug: api.scenarioSlug,
+        reasons:
+          index === 0
+            ? [
+                'Selected because it is a write API and write journeys take priority for k6 output.',
+                'Auth APIs were excluded from k6 candidate selection.',
+              ]
+            : ['Paired with the related detail read API after selecting the write candidate.'],
+      })),
+    };
   }
 
-  return [...loadCandidates]
+  const candidates = [...loadCandidates]
     .sort((left, right) => Number(left.isWrite) - Number(right.isWrite) || left.timestamp - right.timestamp)
     .slice(0, 2);
+  return {
+    candidates,
+    reasons: candidates.map((api, index) => ({
+      scenarioSlug: api.scenarioSlug,
+      reasons:
+        index === 0
+          ? ['Selected as an early non-auth load-test candidate after filtering static and analytics traffic.']
+          : ['Selected as the next non-auth load-test candidate based on request order.'],
+    })),
+  };
 };
 
 export const normalizeSession = (
@@ -455,7 +575,8 @@ export const normalizeSession = (
   const steps = attachApisToSteps(buildActionSteps(session), rawApis);
   const normalizedApis = [...new Map(steps.flatMap((step) => step.apis).map((api) => [api.id, api])).values()];
   const journeySlug = slugify(session.name);
-  const k6Candidates = pickK6Candidates(normalizedApis).map((api) => api.scenarioSlug);
+  const { candidates, reasons } = pickK6Candidates(normalizedApis);
+  const k6Candidates = candidates.map((api) => api.scenarioSlug);
 
   return {
     id: session.id,
@@ -467,6 +588,7 @@ export const normalizeSession = (
     suggestions: {
       playwright: true,
       k6Candidates,
+      k6CandidateReasons: reasons,
     },
   };
 };

@@ -65,6 +65,11 @@ describe('recording smoke', () => {
       'Search products',
       'Open product detail',
     ]);
+    expect(bundle.journey.steps[1]?.explanation).toContain(
+      'Classified as auth because POST /api/auth/login matched login heuristics.',
+    );
+    expect(bundle.journey.coreApis[1]?.explanation).toContain('Captured as fetch.');
+    expect(bundle.journey.suggestions.k6CandidateReasons).toHaveLength(2);
 
     const playwrightArtifact = bundle.artifacts.find((artifact) => artifact.kind === 'playwright');
     const flowArtifact = bundle.artifacts.find((artifact) => artifact.kind === 'flow-doc');

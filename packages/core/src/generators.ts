@@ -35,6 +35,14 @@ const objectLiteralForCode = (value: Record<string, string | number | boolean>):
 };
 
 const selectK6Candidates = (journey: NormalizedJourney) => {
+  const suggestedCandidates = journey.suggestions.k6Candidates
+    .map((scenarioSlug) => journey.coreApis.find((api) => api.scenarioSlug === scenarioSlug))
+    .filter((api): api is NonNullable<typeof api> => Boolean(api));
+
+  if (suggestedCandidates.length > 0) {
+    return suggestedCandidates;
+  }
+
   const loadCandidates = journey.coreApis.filter((api) => api.candidateForLoadTest);
   const preferredWrite = loadCandidates.find(
     (api) => api.isWrite && !api.path.includes('/auth/') && !api.path.includes('/login'),
@@ -61,6 +69,9 @@ const selectK6Candidates = (journey: NormalizedJourney) => {
     .sort((left, right) => Number(left.isWrite) - Number(right.isWrite) || left.timestamp - right.timestamp)
     .slice(0, 2);
 };
+
+const reasonsForCandidate = (journey: NormalizedJourney, scenarioSlug: string): string[] =>
+  journey.suggestions.k6CandidateReasons.find((candidate) => candidate.scenarioSlug === scenarioSlug)?.reasons ?? [];
 
 export const generatePlaywright = (journey: NormalizedJourney): string => {
   const initialPath = new URL(journey.steps[0]?.pageUrl ?? journey.baseUrl).pathname || '/';
@@ -106,6 +117,12 @@ export const generateFlowDoc = (journey: NormalizedJourney): string => {
   for (const [index, step] of journey.steps.entries()) {
     lines.push(`## Step ${index + 1}. ${step.title}`);
     lines.push(`- Action: ${step.actionSummary}`);
+    if ((step.explanation ?? []).length > 0) {
+      lines.push('- Why:');
+      for (const reason of step.explanation ?? []) {
+        lines.push(`  - ${reason}`);
+      }
+    }
     const writeApi = step.apis.find((api) => api.isWrite && api.payloadTemplate);
     if (writeApi?.payloadTemplate) {
       lines.push(`- Payload fields: ${Object.keys(writeApi.payloadTemplate).join(', ')}`);
@@ -114,6 +131,9 @@ export const generateFlowDoc = (journey: NormalizedJourney): string => {
       lines.push('- API:');
       for (const api of step.apis) {
         lines.push(`  - ${api.method} ${buildPathWithSafeQuery(api.url)} (${api.status}, ${api.durationMs}ms)`);
+        for (const reason of api.explanation ?? []) {
+          lines.push(`    - Why: ${reason}`);
+        }
       }
     }
     lines.push('');
@@ -122,6 +142,9 @@ export const generateFlowDoc = (journey: NormalizedJourney): string => {
   lines.push('## Load test candidates');
   for (const api of selectK6Candidates(journey)) {
     lines.push(`- ${api.method} ${api.path}`);
+    for (const reason of reasonsForCandidate(journey, api.scenarioSlug)) {
+      lines.push(`  - Why selected: ${reason}`);
+    }
   }
 
   return `${lines.join('\n')}\n`;
