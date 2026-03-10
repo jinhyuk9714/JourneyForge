@@ -84,6 +84,22 @@ describe('createDesktopRuntime', () => {
     });
   });
 
+  it('uses an injected default data dir when no test env override is present', () => {
+    const realRuntime = createStubRuntime();
+    const createRealRuntime = vi.fn(() => realRuntime);
+
+    const runtime = createDesktopRuntime({
+      env: {},
+      defaultDataDir: '/Users/sungjh/Library/Application Support/JourneyForge/data',
+      createRealRuntime,
+    });
+
+    expect(runtime).toBe(realRuntime);
+    expect(createRealRuntime).toHaveBeenCalledWith({
+      dataDir: '/Users/sungjh/Library/Application Support/JourneyForge/data',
+    });
+  });
+
   it('creates the real execution smoke runtime when execution smoke env is enabled', () => {
     const realRuntime = createStubRuntime();
     const fakeRuntime = createStubRuntime();

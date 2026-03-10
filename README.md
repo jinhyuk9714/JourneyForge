@@ -27,6 +27,7 @@ pnpm smoke
 pnpm --filter @journeyforge/desktop test:e2e
 pnpm --filter @journeyforge/desktop test:smoke-real
 pnpm --filter @journeyforge/desktop test:smoke-execution-real
+pnpm --filter @journeyforge/desktop package:mac
 pnpm test
 pnpm build
 ```
@@ -52,6 +53,13 @@ pnpm build
 - `pnpm approve-builds` and approve `keytar` if pnpm reports blocked native build scripts
 - `pnpm --filter @journeyforge/desktop exec node node_modules/electron/install.js` repairs a skipped Electron binary download in fresh worktrees
 - If Playwright execution reports keychain load issues, rebuild native modules in the desktop package before retrying
+
+## Packaged Desktop Baseline
+
+- `pnpm --filter @journeyforge/desktop package:mac` builds an unsigned macOS `.app` baseline and a `.zip` under `apps/desktop/release`
+- The packaged app keeps the same `data/` subdirectory layout, but stores it under Electron `userData` instead of the repo root
+- `settings.json`, session data, and exports appear there after the first settings/session interaction
+- Playwright, k6, and keychain behavior still depend on the local machine toolchain and macOS keychain
 
 ## Real-Browser Verification
 
@@ -90,8 +98,13 @@ pnpm build
 9. On the Playwright tab, click `Playwright 실행` and confirm the execution panel streams logs
 10. On the k6 tab, click `k6 실행` and confirm the execution panel streams logs
 11. Export at least one artifact and confirm a file appears under `data/exports`
+12. Save, replace, and clear the Playwright password from `Settings`
+13. Restart the app and confirm the credential status still matches the OS keychain state
+14. Run `pnpm --filter @journeyforge/desktop package:mac` and confirm `apps/desktop/release/JourneyForge.app` is produced
+15. Launch the packaged app once, open `Settings` or start a recording, and confirm it writes data under the packaged `userData` location
 
 ## Current Limits
 
 - OS keychain-backed credential flow is still manually validated on a developer machine
-- Packaged distribution, installer behavior, and code signing are still outside automated coverage
+- Packaged app startup is still manually validated on a developer machine
+- Installer behavior and code signing are still outside automated coverage

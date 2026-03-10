@@ -25,6 +25,7 @@ export const DESKTOP_E2E_DATA_DIR_ENV = 'JOURNEYFORGE_DESKTOP_DATA_DIR';
 
 type CreateDesktopRuntimeOptions = {
   env?: NodeJS.ProcessEnv;
+  defaultDataDir?: string;
   createRealRuntime?: (input: { dataDir: string }) => DesktopRuntime;
   createFakeRuntime?: (input: { dataDir: string; scenario: DesktopE2EScenario }) => DesktopRuntime;
   createRealSmokeRuntime?: (input: { dataDir: string; scenario: RealDesktopSmokeScenario }) => DesktopRuntime;
@@ -57,6 +58,7 @@ const toRealExecutionTarget = (value: string | undefined): RealExecutionSmokeTar
 
 export const createDesktopRuntime = ({
   env = process.env,
+  defaultDataDir,
   createRealRuntime = ({ dataDir }) => createJourneyForgeDesktopRuntime({ dataDir }),
   createFakeRuntime = ({ dataDir, scenario }) => createFakeDesktopRuntime({ dataDir, scenario }),
   createRealSmokeRuntime = ({ dataDir, scenario }) => createRealSmokeDesktopRuntime({ dataDir, scenario }),
@@ -67,6 +69,7 @@ export const createDesktopRuntime = ({
     env[DESKTOP_E2E_DATA_DIR_ENV] ??
     env[DESKTOP_REAL_EXECUTION_DATA_DIR_ENV] ??
     env[DESKTOP_REAL_SMOKE_DATA_DIR_ENV] ??
+    defaultDataDir ??
     resolve(process.cwd(), 'data');
 
   if (env[DESKTOP_E2E_ENV] === '1') {

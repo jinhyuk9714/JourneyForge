@@ -11,9 +11,10 @@ import { registerSettingsIpc } from './ipc/settings.ipc';
 import { registerSessionIpc } from './ipc/session.ipc';
 import { IPC_CHANNELS } from './ipc/channels';
 import { createDesktopRuntime } from './services/desktopRuntimeFactory';
+import type { DesktopRuntime } from './services/journeyForgeDesktopService';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const desktopApp = createDesktopRuntime();
+let desktopApp: DesktopRuntime | null = null;
 
 const createWindow = async () => {
   const mainWindow = new BrowserWindow({
@@ -39,6 +40,10 @@ const createWindow = async () => {
 };
 
 app.whenReady().then(async () => {
+  desktopApp = createDesktopRuntime({
+    defaultDataDir: app.isPackaged ? join(app.getPath('userData'), 'data') : undefined,
+  });
+
   registerRecordingIpc(desktopApp);
   registerSessionIpc(desktopApp);
   registerExportIpc(desktopApp);
@@ -60,7 +65,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', async () => {
-  await desktopApp.dispose();
+  await desktopApp?.dispose();
   if (process.platform !== 'darwin') {
     app.quit();
   }

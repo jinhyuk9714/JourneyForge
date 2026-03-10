@@ -6,5 +6,6 @@ out
 .electron-vite
 coverage
 data
+apps/desktop/release
 playwright-report
 test-results

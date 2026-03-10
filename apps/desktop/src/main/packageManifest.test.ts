@@ -31,6 +31,12 @@ describe('desktop package manifest', () => {
     expect(packageJson.scripts?.['test:smoke-execution-real']).toBe(
       'playwright test -c playwright.real-execution.config.ts',
     );
+    expect(packageJson.scripts?.['prepackage:mac']).toBe(
+      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && electron-builder install-app-deps',
+    );
+    expect(packageJson.scripts?.['package:mac']).toBe(
+      'electron-builder --config electron-builder.yml --publish never',
+    );
   });
 
   it('points workspace runtime packages at built dist entries for Electron execution', () => {
@@ -61,5 +67,17 @@ describe('desktop package manifest', () => {
         default: './dist/index.js',
       });
     }
+  });
+
+  it('declares an unsigned macOS packaging baseline for the desktop app', () => {
+    const builderConfig = readFileSync(resolve(__dirname, '../../electron-builder.yml'), 'utf8');
+
+    expect(builderConfig).toContain('productName: JourneyForge');
+    expect(builderConfig).toContain('directories:');
+    expect(builderConfig).toContain('output: release');
+    expect(builderConfig).toContain('target:');
+    expect(builderConfig).toContain('- dir');
+    expect(builderConfig).toContain('- zip');
+    expect(builderConfig).toContain('identity: null');
   });
 });
