@@ -17,8 +17,15 @@ export const SettingsPage = () => {
     hasPlaywrightPassword: false,
   });
   const [passwordValue, setPasswordValue] = useState('');
-  const [status, setStatus] = useState<'loading' | 'ready' | 'saving' | 'error'>('loading');
-  const [error, setError] = useState<string | null>(null);
+  const [settingsStatus, setSettingsStatus] = useState<'loading' | 'ready' | 'saving' | 'error'>('loading');
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [credentialFeedback, setCredentialFeedback] = useState<{
+    tone: 'idle' | 'saving' | 'success' | 'error';
+    message: string | null;
+  }>({
+    tone: 'idle',
+    message: null,
+  });
   const requestIdRef = useRef(0);
 
   useEffect(() => {
@@ -32,13 +39,13 @@ export const SettingsPage = () => {
         }
         setSettings(loaded.settings);
         setCredentialStatus(loaded.credentialStatus);
-        setStatus('ready');
+        setSettingsStatus('ready');
       } catch (cause) {
         if (cancelled) {
           return;
         }
-        setError(toErrorMessage(cause));
-        setStatus('error');
+        setSettingsError(toErrorMessage(cause));
+        setSettingsStatus('error');
       }
     };
 
@@ -51,8 +58,8 @@ export const SettingsPage = () => {
 
   const persistSettings = (nextSettings: JourneyForgeSettings) => {
     setSettings(nextSettings);
-    setError(null);
-    setStatus('saving');
+    setSettingsError(null);
+    setSettingsStatus('saving');
 
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
@@ -65,14 +72,14 @@ export const SettingsPage = () => {
         }
         setSettings(saved.settings);
         setCredentialStatus(saved.credentialStatus);
-        setStatus('ready');
+        setSettingsStatus('ready');
       })
       .catch((cause) => {
         if (requestId !== requestIdRef.current) {
           return;
         }
-        setError(toErrorMessage(cause));
-        setStatus('error');
+        setSettingsError(toErrorMessage(cause));
+        setSettingsStatus('error');
       });
   };
 
@@ -80,34 +87,48 @@ export const SettingsPage = () => {
     if (!passwordValue) {
       return;
     }
-    setError(null);
-    setStatus('saving');
+    setCredentialFeedback({
+      tone: 'saving',
+      message: 'Saving the Playwright password to the OS keychain...',
+    });
     void window.journeyforge.credentials
       .setPlaywrightPassword({ value: passwordValue })
       .then(() => {
         setCredentialStatus({ hasPlaywrightPassword: true });
         setPasswordValue('');
-        setStatus('ready');
+        setCredentialFeedback({
+          tone: 'success',
+          message: 'Playwright password saved to the OS keychain.',
+        });
       })
       .catch((cause) => {
-        setError(toErrorMessage(cause));
-        setStatus('error');
+        setCredentialFeedback({
+          tone: 'error',
+          message: toErrorMessage(cause),
+        });
       });
   };
 
   const clearPassword = () => {
-    setError(null);
-    setStatus('saving');
+    setCredentialFeedback({
+      tone: 'saving',
+      message: 'Removing the Playwright password from the OS keychain...',
+    });
     void window.journeyforge.credentials
       .clearPlaywrightPassword()
       .then(() => {
         setCredentialStatus({ hasPlaywrightPassword: false });
         setPasswordValue('');
-        setStatus('ready');
+        setCredentialFeedback({
+          tone: 'success',
+          message: 'Playwright password removed from the OS keychain.',
+        });
       })
       .catch((cause) => {
-        setError(toErrorMessage(cause));
-        setStatus('error');
+        setCredentialFeedback({
+          tone: 'error',
+          message: toErrorMessage(cause),
+        });
       });
   };
 
@@ -120,12 +141,12 @@ export const SettingsPage = () => {
           Saved to <code>data/settings.json</code>. Changes apply to sessions that start after the save completes.
         </p>
         <p className="mt-2 text-xs text-ink/55">
-          {status === 'loading'
+          {settingsStatus === 'loading'
             ? 'Loading current settings...'
-            : status === 'saving'
+            : settingsStatus === 'saving'
               ? 'Saving updates for the next recording...'
-              : status === 'error'
-                ? error ?? 'Failed to update settings.'
+              : settingsStatus === 'error'
+                ? settingsError ?? 'Failed to update settings.'
                 : 'Current settings are active for the next recording.'}
         </p>
       </div>
@@ -278,6 +299,19 @@ export const SettingsPage = () => {
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sand/60">Keychain</p>
             <p className="mt-3 text-sm">{credentialStatus.hasPlaywrightPassword ? 'Playwright password configured' : 'Playwright password not configured'}</p>
+            {credentialFeedback.message ? (
+              <p
+                className={`mt-2 text-xs ${
+                  credentialFeedback.tone === 'error'
+                    ? 'text-rose-200'
+                    : credentialFeedback.tone === 'success'
+                      ? 'text-green-200'
+                      : 'text-sand/70'
+                }`}
+              >
+                {credentialFeedback.message}
+              </p>
+            ) : null}
             <label htmlFor="playwright-password" className="mt-4 flex flex-col gap-2 text-sm">
               <span>Playwright password</span>
               <input

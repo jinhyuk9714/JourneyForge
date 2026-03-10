@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_SETTINGS } from '@journeyforge/shared';
 import type { JourneyForgeDesktopApi } from '../../preload/index';
@@ -50,6 +50,11 @@ const buildApi = (overrides: Partial<JourneyForgeDesktopApi['settings']> = {}): 
 describe('SettingsPage', () => {
   beforeEach(() => {
     window.journeyforge = buildApi();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
   });
 
   it('loads settings from IPC and persists user changes through the desktop bridge', async () => {
@@ -135,5 +140,74 @@ describe('SettingsPage', () => {
     });
     expect(api.credentials.setPlaywrightPassword).toHaveBeenCalledWith({ value: 'next-secret' });
     expect(api.credentials.clearPlaywrightPassword).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows settings update failures without overwriting keychain status text', async () => {
+    const api = buildApi({
+      update: vi.fn().mockRejectedValue(new Error('Settings write failed.')),
+    });
+    window.journeyforge = api;
+
+    render(<SettingsPage />);
+
+    await screen.findByLabelText('Analytics filters');
+    fireEvent.change(screen.getByLabelText('Analytics filters'), {
+      target: { value: 'segment' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Settings write failed.')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Playwright password not configured')).toBeInTheDocument();
+  });
+
+  it('keeps the credential status unchanged when saving the Playwright password fails', async () => {
+    const api = buildApi();
+    api.credentials.setPlaywrightPassword = vi.fn().mockRejectedValue(new Error('The keychain is locked.'));
+    window.journeyforge = api;
+
+    render(<SettingsPage />);
+
+    await screen.findByLabelText('Playwright password');
+    fireEvent.change(screen.getByLabelText('Playwright password'), {
+      target: { value: 'next-secret' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '비밀번호 저장/교체' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('The keychain is locked.')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Playwright password not configured')).toBeInTheDocument();
+  });
+
+  it('keeps the credential status unchanged when clearing the Playwright password fails', async () => {
+    const api = buildApi({
+      get: vi.fn().mockResolvedValue({
+        settings: DEFAULT_SETTINGS,
+        credentialStatus: {
+          hasPlaywrightPassword: true,
+        },
+      }),
+      update: vi.fn().mockImplementation(async (input) => ({
+        settings: input,
+        credentialStatus: {
+          hasPlaywrightPassword: true,
+        },
+      })),
+    });
+    api.credentials.clearPlaywrightPassword = vi
+      .fn()
+      .mockRejectedValue(new Error('The JourneyForge keychain item could not be removed.'));
+    window.journeyforge = api;
+
+    render(<SettingsPage />);
+
+    await screen.findByText('Playwright password configured');
+    fireEvent.click(screen.getByRole('button', { name: '비밀번호 삭제' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('The JourneyForge keychain item could not be removed.')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Playwright password configured')).toBeInTheDocument();
   });
 });

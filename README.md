@@ -104,21 +104,32 @@ pnpm build
 
 ## Manual Validation Checklist
 
-1. Run `pnpm demo-target`
-2. In another terminal run `pnpm dev`
-3. Open the Electron app and enter `http://127.0.0.1:4173/login`
-4. Click `기록 시작`, then use the spawned Chromium window to log in, search `맥북`, and open `MacBook Pro 14`
-5. Click `기록 종료`
-6. Open `Settings` and set a Playwright test email, optional execution base URLs, and a Playwright password
-7. Confirm the preview shows Playwright, Flow Markdown, and k6 artifacts
-8. Use `실행 번들 내보내기` and confirm a bundle appears under `data/exports`
-9. On the Playwright tab, click `Playwright 실행` and confirm the execution panel streams logs
-10. On the k6 tab, click `k6 실행` and confirm the execution panel streams logs
-11. Export at least one artifact and confirm a file appears under `data/exports`
-12. Save, replace, and clear the Playwright password from `Settings`
-13. Restart the app and confirm the credential status still matches the OS keychain state
-14. Export signing and notarization credentials, run `pnpm --filter @journeyforge/desktop package:mac`, then run `pnpm --filter @journeyforge/desktop notarize:mac:verify`
-15. Confirm `.dmg` and `.zip` artifacts are produced under `apps/desktop/release`
+### Keychain Credential Loop
+
+1. Run `pnpm dev`
+2. Open `Settings`
+3. Enter a Playwright password and click `비밀번호 저장/교체`
+4. Confirm the status changes to `Playwright password configured`
+5. Enter a different password and click `비밀번호 저장/교체` again
+6. Quit and relaunch the app, then confirm the configured status still matches the macOS keychain item
+7. Click `비밀번호 삭제`
+8. Confirm the status changes to `Playwright password not configured`
+9. Quit and relaunch the app again, then confirm the cleared status still matches the macOS keychain item
+
+### Packaged App Keychain Loop
+
+1. Run `pnpm --filter @journeyforge/desktop package:mac:unsigned` for a fast local package or `pnpm --filter @journeyforge/desktop package:mac` for the signed release path
+2. Launch the packaged `.app`
+3. Repeat the same save, replace, delete, and relaunch loop from the `Settings` screen
+4. Confirm the credential status stays in sync with the macOS keychain across packaged app restarts
+
+### Signed Release Validation
+
+1. Export signing and notarization credentials
+2. Run `pnpm --filter @journeyforge/desktop package:mac`
+3. Run `pnpm --filter @journeyforge/desktop notarize:mac:verify`
+4. Confirm `.dmg` and `.zip` artifacts are produced under `apps/desktop/release`
+5. Confirm the signed/notarized `.app` and `.dmg` pass `codesign`, `stapler`, and `spctl`
 
 ## Current Limits
 
