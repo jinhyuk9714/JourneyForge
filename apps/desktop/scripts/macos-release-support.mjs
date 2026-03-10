@@ -3,6 +3,35 @@ import { constants } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const hasValue = (value) => typeof value === 'string' && value.trim().length > 0;
+const releaseTagPattern = /^v(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)$/;
+
+export const resolveMacReleaseTag = ({ inputTag, githubRefName, githubRefType }) => {
+  if (hasValue(inputTag)) {
+    return inputTag.trim();
+  }
+
+  if (githubRefType === 'tag' && hasValue(githubRefName)) {
+    return githubRefName.trim();
+  }
+
+  throw new Error('Set workflow_dispatch input tag or run the workflow from a v* git tag.');
+};
+
+export const validateMacReleaseTagVersion = ({ releaseTag, packageVersion }) => {
+  const match = releaseTagPattern.exec(releaseTag);
+  if (!match) {
+    throw new Error('Release tag must start with v and include a semantic version, for example v0.1.1.');
+  }
+
+  const [, releaseVersion] = match;
+  if (releaseVersion !== packageVersion) {
+    throw new Error(`Release tag ${releaseTag} does not match desktop package version ${packageVersion}.`);
+  }
+
+  return {
+    releaseVersion,
+  };
+};
 
 const resolveDmgSigningIdentity = (env = process.env) => {
   if (!hasValue(env.CSC_NAME)) {
@@ -161,3 +190,13 @@ export const buildMacReleaseVerificationSteps = ({ appPath, dmgPath }) => [
     args: ['test:package-smoke:signed'],
   },
 ];
+
+export const writeGitHubOutput = async ({ outputPath, values }) => {
+  if (!hasValue(outputPath)) {
+    return;
+  }
+
+  const { appendFile } = await import('node:fs/promises');
+  const lines = Object.entries(values).map(([key, value]) => `${key}=${value}`);
+  await appendFile(outputPath, `${lines.join('\n')}\n`, 'utf8');
+};

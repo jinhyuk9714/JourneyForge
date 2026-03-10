@@ -74,6 +74,20 @@ pnpm build
 - `settings.json`, session data, and exports appear there after the first settings/session interaction
 - Playwright, k6, and keychain behavior still depend on the local machine toolchain and macOS keychain
 
+## CI macOS Release Prerequisites
+
+- `.github/workflows/macos-release.yml` is the official GitHub Actions release path
+- The workflow triggers on `v*` tag pushes and supports `workflow_dispatch` with a `tag` input
+- Configure these repository secrets before enabling the workflow:
+  - `BUILD_CERTIFICATE_BASE64`
+  - `P12_PASSWORD`
+  - `APPLE_API_KEY_BASE64`
+  - `APPLE_API_KEY_ID`
+  - `APPLE_API_ISSUER`
+- Configure `CSC_NAME` as a repository variable or secret
+- The workflow validates that the release tag matches `apps/desktop/package.json` version before packaging
+- Tagged releases are published to GitHub Releases with the signed/notarized `.dmg`, `.zip`, and available `.blockmap` files attached
+
 ## Real-Browser Verification
 
 - `pnpm smoke` runs the real Chromium smoke test for `record -> normalize -> generate -> export`
@@ -138,4 +152,4 @@ The packaged-app keychain loop was manually validated on March 11, 2026.
 
 ## Current Limits
 
-- Signed/notarized macOS releases are still produced manually on a developer Mac; CI release automation is not wired yet
+- Release note curation and installer polish are still handled manually after the signed macOS release workflow completes

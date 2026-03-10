@@ -23,6 +23,8 @@ const {
   buildMacReleaseNotarizationSteps,
   buildMacReleaseVerificationSteps,
   findMacReleaseArtifacts,
+  resolveMacReleaseTag,
+  validateMacReleaseTagVersion,
   validateMacReleaseEnvironment,
 } = (await import(macosReleaseSupportModulePath)) as Awaited<
   Promise<{
@@ -35,6 +37,17 @@ const {
       releaseDir: string;
       productName: string;
     }) => Promise<MacReleaseArtifacts>;
+    resolveMacReleaseTag: (input: {
+      inputTag?: string | null;
+      githubRefName?: string | null;
+      githubRefType?: string | null;
+    }) => string;
+    validateMacReleaseTagVersion: (input: {
+      releaseTag: string;
+      packageVersion: string;
+    }) => {
+      releaseVersion: string;
+    };
     validateMacReleaseEnvironment: (
       env?: NodeJS.ProcessEnv,
     ) => {
@@ -74,6 +87,61 @@ describe('macosReleaseSupport', () => {
       notarizationMode: 'apple-id',
       errors: [],
     });
+  });
+
+  it('resolves the explicit workflow_dispatch tag ahead of the current ref', () => {
+    expect(
+      resolveMacReleaseTag({
+        inputTag: 'v0.1.1',
+        githubRefName: 'main',
+        githubRefType: 'branch',
+      }),
+    ).toBe('v0.1.1');
+  });
+
+  it('resolves the current git tag when the workflow runs from a tag ref', () => {
+    expect(
+      resolveMacReleaseTag({
+        githubRefName: 'v0.1.1',
+        githubRefType: 'tag',
+      }),
+    ).toBe('v0.1.1');
+  });
+
+  it('requires a release tag for manual workflow runs from a branch ref', () => {
+    expect(() =>
+      resolveMacReleaseTag({
+        githubRefName: 'main',
+        githubRefType: 'branch',
+      }),
+    ).toThrow('Set workflow_dispatch input tag or run the workflow from a v* git tag.');
+  });
+
+  it('validates the release tag against the desktop package version', () => {
+    expect(
+      validateMacReleaseTagVersion({
+        releaseTag: 'v0.1.1',
+        packageVersion: '0.1.1',
+      }),
+    ).toEqual({
+      releaseVersion: '0.1.1',
+    });
+  });
+
+  it('rejects non-v release tags and version mismatches', () => {
+    expect(() =>
+      validateMacReleaseTagVersion({
+        releaseTag: 'release-0.1.1',
+        packageVersion: '0.1.1',
+      }),
+    ).toThrow('Release tag must start with v and include a semantic version, for example v0.1.1.');
+
+    expect(() =>
+      validateMacReleaseTagVersion({
+        releaseTag: 'v0.1.2',
+        packageVersion: '0.1.1',
+      }),
+    ).toThrow('Release tag v0.1.2 does not match desktop package version 0.1.1.');
   });
 
   it('builds DMG notarization steps for a keychain profile', () => {
