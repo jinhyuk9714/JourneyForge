@@ -23,6 +23,15 @@ const products = [
   },
 ];
 
+const posts = [
+  {
+    id: '99',
+    title: 'JourneyForge roadmap',
+    content: 'Initial roadmap for JourneyForge write flows.',
+  },
+];
+let nextPostId = 101;
+
 const sendJson = (response, status, payload) => {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
   response.end(JSON.stringify(payload));
@@ -32,6 +41,15 @@ const sendFile = async (response, fileName, contentType) => {
   const content = await readFile(join(publicDir, fileName), 'utf8');
   response.writeHead(200, { 'Content-Type': contentType });
   response.end(content);
+};
+
+const readJsonBody = async (request) => {
+  const chunks = [];
+  for await (const chunk of request) {
+    chunks.push(chunk);
+  }
+  const payload = Buffer.concat(chunks).toString('utf8');
+  return payload ? JSON.parse(payload) : {};
 };
 
 const server = createServer(async (request, response) => {
@@ -59,6 +77,44 @@ const server = createServer(async (request, response) => {
       return;
     }
     sendJson(response, 200, product);
+    return;
+  }
+
+  if (request.method === 'POST' && url.pathname === '/api/posts') {
+    const body = await readJsonBody(request);
+    const created = {
+      id: String(nextPostId),
+      title: body.title ?? '',
+      content: body.content ?? '',
+    };
+    nextPostId += 1;
+    posts.push(created);
+    sendJson(response, 201, created);
+    return;
+  }
+
+  if (request.method === 'PATCH' && url.pathname.startsWith('/api/posts/')) {
+    const postId = url.pathname.split('/').pop();
+    const body = await readJsonBody(request);
+    const post = posts.find((candidate) => candidate.id === postId);
+    if (!post) {
+      sendJson(response, 404, { message: 'Not found' });
+      return;
+    }
+    post.title = body.title ?? '';
+    post.content = body.content ?? '';
+    sendJson(response, 200, post);
+    return;
+  }
+
+  if (request.method === 'GET' && url.pathname.startsWith('/api/posts/')) {
+    const postId = url.pathname.split('/').pop();
+    const post = posts.find((candidate) => candidate.id === postId);
+    if (!post) {
+      sendJson(response, 404, { message: 'Not found' });
+      return;
+    }
+    sendJson(response, 200, post);
     return;
   }
 

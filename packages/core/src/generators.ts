@@ -24,6 +24,44 @@ const resolveInputValue = (input: InputEvent): string => {
   return quoteForCode(input.value);
 };
 
+const objectLiteralForCode = (value: Record<string, string | number | boolean>): string => {
+  const entries = Object.entries(value).map(([key, entry]) => {
+    const renderedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : quoteForCode(key);
+    const renderedValue = typeof entry === 'string' ? quoteForCode(entry) : String(entry);
+    return `${renderedKey}: ${renderedValue}`;
+  });
+
+  return entries.length > 0 ? `{ ${entries.join(', ')} }` : '{}';
+};
+
+const selectK6Candidates = (journey: NormalizedJourney) => {
+  const loadCandidates = journey.coreApis.filter((api) => api.candidateForLoadTest);
+  const preferredWrite = loadCandidates.find(
+    (api) => api.isWrite && !api.path.includes('/auth/') && !api.path.includes('/login'),
+  );
+
+  if (preferredWrite) {
+    const relatedRead = loadCandidates.find((api) => {
+      if (api.isWrite) {
+        return false;
+      }
+      if (api.path === preferredWrite.path) {
+        return true;
+      }
+      if (preferredWrite.method === 'POST') {
+        return api.path.startsWith(`${preferredWrite.path}/`);
+      }
+      return api.path.startsWith(preferredWrite.path);
+    });
+
+    return [preferredWrite, relatedRead].filter((api): api is typeof preferredWrite => Boolean(api)).slice(0, 2);
+  }
+
+  return loadCandidates
+    .sort((left, right) => Number(left.isWrite) - Number(right.isWrite) || left.timestamp - right.timestamp)
+    .slice(0, 2);
+};
+
 export const generatePlaywright = (journey: NormalizedJourney): string => {
   const lines = [
     "import { expect, test } from '@playwright/test';",
@@ -67,6 +105,10 @@ export const generateFlowDoc = (journey: NormalizedJourney): string => {
   for (const [index, step] of journey.steps.entries()) {
     lines.push(`## Step ${index + 1}. ${step.title}`);
     lines.push(`- Action: ${step.actionSummary}`);
+    const writeApi = step.apis.find((api) => api.isWrite && api.payloadTemplate);
+    if (writeApi?.payloadTemplate) {
+      lines.push(`- Payload fields: ${Object.keys(writeApi.payloadTemplate).join(', ')}`);
+    }
     if (step.apis.length > 0) {
       lines.push('- API:');
       for (const api of step.apis) {
@@ -77,9 +119,7 @@ export const generateFlowDoc = (journey: NormalizedJourney): string => {
   }
 
   lines.push('## Load test candidates');
-  for (const api of journey.coreApis
-    .filter((candidate) => candidate.candidateForLoadTest)
-    .sort((left, right) => Number(left.isWrite) - Number(right.isWrite) || left.timestamp - right.timestamp)) {
+  for (const api of selectK6Candidates(journey)) {
     lines.push(`- ${api.method} ${api.path}`);
   }
 
@@ -116,10 +156,7 @@ export const generateK6 = (
   journey: NormalizedJourney,
   settings: JourneyForgeSettings = DEFAULT_SETTINGS,
 ): string | null => {
-  const candidates = journey.coreApis
-    .filter((api) => api.candidateForLoadTest)
-    .sort((left, right) => Number(left.isWrite) - Number(right.isWrite) || left.timestamp - right.timestamp)
-    .slice(0, 2);
+  const candidates = selectK6Candidates(journey);
 
   if (candidates.length === 0) {
     return null;
@@ -131,9 +168,14 @@ export const generateK6 = (
 
   const bodyLines = candidates.map((candidate) =>
     candidate.isWrite
-      ? `    http.${candidate.method.toLowerCase()}(\`${'${__ENV.BASE_URL}'}${buildEncodedPathWithSafeQuery(candidate.url)}\`, JSON.stringify({}), { headers: { 'Content-Type': 'application/json' } })${candidate === candidates.at(-1) ? '' : ','}`
+      ? `    http.${candidate.method.toLowerCase()}(\`${'${__ENV.BASE_URL}'}${buildEncodedPathWithSafeQuery(candidate.url)}\`, JSON.stringify(${objectLiteralForCode(candidate.payloadTemplate ?? {})}), { headers: { 'Content-Type': 'application/json' } })${candidate === candidates.at(-1) ? '' : ','}`
       : `    http.get(\`${'${__ENV.BASE_URL}'}${buildEncodedPathWithSafeQuery(candidate.url)}\`)${candidate === candidates.at(-1) ? '' : ','}`,
   );
+  const usesWriteScenario = candidates.some((candidate) => candidate.isWrite);
+  const statusLabel = usesWriteScenario ? 'status is 2xx' : 'status is 200';
+  const statusCheck = usesWriteScenario
+    ? '(response) => response.status >= 200 && response.status < 300'
+    : '(response) => response.status === 200';
 
   return `import http from 'k6/http';
 import { check } from 'k6';
@@ -155,7 +197,7 @@ ${bodyLines.join('\n')}
 
   responses.forEach((res) => {
     check(res, {
-      'status is 200': (response) => response.status === 200
+      '${statusLabel}': ${statusCheck}
     });
   });
 }

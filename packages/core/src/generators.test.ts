@@ -54,7 +54,6 @@ describe('artifact generators', () => {
       ## Load test candidates
       - GET /api/products
       - GET /api/products/42
-      - POST /api/auth/login
       "
     `);
   });

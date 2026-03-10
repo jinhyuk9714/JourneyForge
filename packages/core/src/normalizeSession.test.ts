@@ -23,7 +23,6 @@ describe('normalizeSession', () => {
     expect(journey.suggestions.k6Candidates).toEqual([
       'get-products',
       'get-product-42',
-      'post-auth-login',
     ]);
   });
 });

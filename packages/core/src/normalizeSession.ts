@@ -13,6 +13,7 @@ import type {
   ApiCall,
   ClickEvent,
   InputEvent,
+  JourneyStepIntent,
   NavigationEvent,
   NetworkRequestEvent,
   NetworkResponseEvent,
@@ -28,6 +29,7 @@ type ActionEvent = ClickEvent | InputEvent | NavigationEvent | SubmitEvent;
 type StepDraft = {
   id: string;
   title: string;
+  intent: JourneyStepIntent;
   pageUrl: string;
   startedAt: number;
   endedAt: number;
@@ -35,11 +37,66 @@ type StepDraft = {
   actions: ActionEvent[];
 };
 
+const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH']);
+const SENSITIVE_FIELD_PATTERN = /(password|secret|token|cookie|authorization|auth|email)/i;
+const CONTENT_FIELD_PATTERN = /(content|description|body|message|notes?)/i;
+const TITLE_FIELD_PATTERN = /title/i;
+const SEARCH_FIELD_PATTERN = /(search|keyword|query|검색)/i;
+
+const sanitizeFieldKey = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+const singularize = (value: string): string => value.replace(/s$/, '');
+
+const prettifyResource = (value: string): string => singularize(value).replace(/[-_]/g, ' ');
+
+const resourceSegmentsFromPath = (path: string): string[] =>
+  (path.split('?')[0] ?? '')
+    .split('/')
+    .filter(Boolean)
+    .filter((segment) => segment !== 'api');
+
+const baseResourceSegment = (path: string): string => {
+  const filtered = resourceSegmentsFromPath(path).filter(
+    (segment) => !/^\d+$/.test(segment) && segment !== 'new' && segment !== 'edit',
+  );
+  return filtered.at(-1) ?? 'resource';
+};
+
+const resourceLabel = (path: string): string => prettifyResource(baseResourceSegment(path));
+
+const expectedStatusesFor = (status: number): number[] => [status];
+
 const isActionEvent = (event: RawEvent): event is ActionEvent =>
   event.type === 'click' ||
   event.type === 'input' ||
   event.type === 'navigation' ||
   event.type === 'submit';
+
+const isAuthApi = (api: ApiCall): boolean => api.path.includes('/auth/') || api.path.includes('/login');
+
+const buildPayloadTemplate = (actions: ActionEvent[]): Record<string, string> | undefined => {
+  const entries = actions
+    .filter((action): action is InputEvent => action.type === 'input')
+    .filter((input) => !input.masked)
+    .filter((input) => !SENSITIVE_FIELD_PATTERN.test(input.fieldName ?? input.locator.value))
+    .map((input) => sanitizeFieldKey(input.fieldName ?? input.locator.value))
+    .filter(Boolean)
+    .map((fieldKey) => [
+      fieldKey,
+      TITLE_FIELD_PATTERN.test(fieldKey)
+        ? 'sample title'
+        : CONTENT_FIELD_PATTERN.test(fieldKey)
+          ? 'sample content'
+          : `sample ${fieldKey.replace(/_/g, ' ')}`,
+    ] as const);
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
 
 const buildApiCalls = (events: RawEvent[], settings: JourneyForgeSettings): ApiCall[] => {
   const requestMap = new Map<string, NetworkRequestEvent>();
@@ -85,6 +142,7 @@ const buildApiCalls = (events: RawEvent[], settings: JourneyForgeSettings): ApiC
       scenarioSlug: inferScenarioSlug(request.method, pathWithQuery),
       isWrite: !['GET', 'HEAD'].includes(request.method.toUpperCase()),
       candidateForLoadTest: response.status < 500,
+      expectedStatuses: expectedStatusesFor(response.status),
     });
   }
 
@@ -115,7 +173,17 @@ const isNavigationStandalone = (event: NavigationEvent, previous: ActionEvent | 
 };
 
 const buildNavigationTitle = (event: NavigationEvent): string => {
-  const label = prettyPathLabel(new URL(event.targetUrl).pathname);
+  const targetPath = new URL(event.targetUrl).pathname;
+  if (targetPath.endsWith('/new')) {
+    return `Open new ${resourceLabel(targetPath)} page`;
+  }
+  if (targetPath.endsWith('/edit')) {
+    return `Open edit ${resourceLabel(targetPath)} page`;
+  }
+  if (/\/\d+$/.test(targetPath)) {
+    return `Open ${resourceLabel(targetPath)} detail`;
+  }
+  const label = prettyPathLabel(targetPath);
   return `Open ${label} page`;
 };
 
@@ -150,6 +218,85 @@ const buildClickTitle = (event: ClickEvent, pendingInputs: InputEvent[]): string
   }
 
   return `Click ${event.text ?? event.locator.value}`;
+};
+
+const classifyStep = (step: StepDraft & { apis: ApiCall[] }): Pick<StepDraft, 'title' | 'intent'> => {
+  const clickText = step.actions
+    .filter((action): action is ClickEvent => action.type === 'click')
+    .map((action) => action.text ?? action.locator.value)
+    .join(' ')
+    .toLowerCase();
+  const inputKeys = step.actions
+    .filter((action): action is InputEvent => action.type === 'input')
+    .map((action) => (action.fieldName ?? action.locator.value).toLowerCase());
+  const navigationPath = step.actions
+    .filter((action): action is NavigationEvent => action.type === 'navigation')
+    .map((action) => new URL(action.targetUrl).pathname)
+    .at(-1);
+  const writeApi = step.apis.find((api) => api.isWrite && !isAuthApi(api));
+  const authApi = step.apis.find((api) => isAuthApi(api));
+  const readApi = step.apis.find((api) => !api.isWrite);
+
+  if (writeApi) {
+    return {
+      intent: writeApi.method === 'POST' ? 'create' : 'update',
+      title: `${writeApi.method === 'POST' ? 'Create' : 'Update'} ${resourceLabel(writeApi.path)}`,
+    };
+  }
+
+  if (readApi) {
+    if (SEARCH_FIELD_PATTERN.test(clickText) || inputKeys.some((key) => SEARCH_FIELD_PATTERN.test(key))) {
+      return {
+        intent: 'read',
+        title: `Search ${baseResourceSegment(readApi.path).replace(/[-_]/g, ' ')}`,
+      };
+    }
+
+    if (navigationPath && /\/\d+$/.test(navigationPath)) {
+      return {
+        intent: 'read',
+        title: `Open ${resourceLabel(navigationPath)} detail`,
+      };
+    }
+
+    return {
+      intent: 'read',
+      title: step.title,
+    };
+  }
+
+  if (authApi || clickText.includes('로그인') || clickText.includes('login')) {
+    return {
+      intent: 'auth',
+      title: 'Login',
+    };
+  }
+
+  if (navigationPath?.endsWith('/new')) {
+    return {
+      intent: 'navigation',
+      title: `Open new ${resourceLabel(navigationPath)} page`,
+    };
+  }
+
+  if (navigationPath?.endsWith('/edit')) {
+    return {
+      intent: 'navigation',
+      title: `Open edit ${resourceLabel(navigationPath)} page`,
+    };
+  }
+
+  if (step.actions.some((action) => action.type === 'navigation')) {
+    return {
+      intent: 'navigation',
+      title: buildNavigationTitle(step.actions.find((action): action is NavigationEvent => action.type === 'navigation')!),
+    };
+  }
+
+  return {
+    intent: 'read',
+    title: step.title,
+  };
 };
 
 const buildActionSteps = (session: RecordedSession): StepDraft[] => {
@@ -192,6 +339,7 @@ const buildActionSteps = (session: RecordedSession): StepDraft[] => {
         steps.push({
           id: event.id,
           title: buildNavigationTitle(event),
+          intent: 'navigation',
           pageUrl: event.pageUrl,
           startedAt: event.timestamp,
           endedAt: event.timestamp,
@@ -213,6 +361,7 @@ const buildActionSteps = (session: RecordedSession): StepDraft[] => {
     steps.push({
       id: event.id,
       title: event.type === 'click' ? buildClickTitle(event, pendingInputs) : 'Submit form',
+      intent: 'read',
       pageUrl: event.pageUrl,
       startedAt: actions[0]?.timestamp ?? event.timestamp,
       endedAt: event.timestamp,
@@ -230,6 +379,7 @@ const buildActionSteps = (session: RecordedSession): StepDraft[] => {
       steps.push({
         id: firstInput.id,
         title: 'Fill form',
+        intent: 'read',
         pageUrl: firstInput.pageUrl,
         startedAt: firstInput.timestamp,
         endedAt: lastInput.timestamp,
@@ -246,23 +396,66 @@ const attachApisToSteps = (steps: StepDraft[], apis: ApiCall[]) =>
   steps.map((step, index) => {
     const nextStep = steps[index + 1];
     const upperBound = nextStep ? nextStep.startedAt : Number.POSITIVE_INFINITY;
+    const payloadTemplate = buildPayloadTemplate(step.actions);
+    const stepApis = apis
+      .filter((api) => api.timestamp >= step.startedAt - 50 && api.timestamp < upperBound)
+      .map((api) =>
+        api.isWrite && payloadTemplate && !isAuthApi(api)
+          ? {
+              ...api,
+              payloadTemplate,
+            }
+          : api,
+      );
+    const classified = classifyStep({
+      ...step,
+      apis: stepApis,
+    });
+
     return {
       ...step,
-      apis: apis.filter((api) => api.timestamp >= step.startedAt - 50 && api.timestamp < upperBound),
+      ...classified,
+      apis: stepApis,
     };
   });
+
+const pickK6Candidates = (apis: ApiCall[]): ApiCall[] => {
+  const loadCandidates = apis.filter((api) => api.candidateForLoadTest);
+  const preferredWrite = loadCandidates.find(
+    (api) => api.isWrite && !isAuthApi(api) && WRITE_METHODS.has(api.method),
+  );
+
+  if (preferredWrite) {
+    const relatedRead = loadCandidates.find((api) => {
+      if (api.isWrite) {
+        return false;
+      }
+      if (api.path === preferredWrite.path) {
+        return true;
+      }
+      if (preferredWrite.method === 'POST') {
+        return api.path.startsWith(`${preferredWrite.path}/`);
+      }
+      return api.path.startsWith(preferredWrite.path);
+    });
+
+    return [preferredWrite, relatedRead].filter((api): api is ApiCall => Boolean(api)).slice(0, 2);
+  }
+
+  return [...loadCandidates]
+    .sort((left, right) => Number(left.isWrite) - Number(right.isWrite) || left.timestamp - right.timestamp)
+    .slice(0, 2);
+};
 
 export const normalizeSession = (
   session: RecordedSession,
   settings: JourneyForgeSettings = DEFAULT_SETTINGS,
 ): NormalizedJourney => {
-  const coreApis = buildApiCalls(session.rawEvents, settings);
-  const steps = attachApisToSteps(buildActionSteps(session), coreApis);
+  const rawApis = buildApiCalls(session.rawEvents, settings);
+  const steps = attachApisToSteps(buildActionSteps(session), rawApis);
+  const normalizedApis = [...new Map(steps.flatMap((step) => step.apis).map((api) => [api.id, api])).values()];
   const journeySlug = slugify(session.name);
-  const k6Candidates = [...coreApis]
-    .filter((api) => api.candidateForLoadTest)
-    .sort((left, right) => Number(left.isWrite) - Number(right.isWrite) || left.timestamp - right.timestamp)
-    .map((api) => api.scenarioSlug);
+  const k6Candidates = pickK6Candidates(normalizedApis).map((api) => api.scenarioSlug);
 
   return {
     id: session.id,
@@ -270,7 +463,7 @@ export const normalizeSession = (
     slug: journeySlug,
     baseUrl: session.baseUrl,
     steps,
-    coreApis,
+    coreApis: normalizedApis,
     suggestions: {
       playwright: true,
       k6Candidates,

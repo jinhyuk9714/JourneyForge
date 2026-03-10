@@ -151,4 +151,114 @@ describe('recording smoke', () => {
 
     await app.dispose();
   }, 60_000);
+
+  it('records a create-post journey with write payload hints', async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), 'journeyforge-smoke-create-'));
+    const server = await startDemoTargetServer();
+    cleanup = server.close;
+
+    let activePage: Page | null = null;
+    const app = createJourneyForgeApp({
+      dataDir,
+      recorder: {
+        launchOptions: {
+          headless: true,
+        },
+        onPageReady(page) {
+          activePage = page;
+        },
+      },
+    });
+
+    const { sessionId } = await app.startRecording({
+      baseUrl: `${server.baseUrl}/login`,
+      name: 'Create Post Journey',
+    });
+
+    await activePage!.getByLabel('Email').fill('qa@example.com');
+    await activePage!.getByLabel('Password').fill('super-secret');
+    await activePage!.getByRole('button', { name: '로그인' }).click();
+    await activePage!.waitForURL(`${server.baseUrl}/products`);
+    await activePage!.getByRole('link', { name: '게시글 작성' }).click();
+    await activePage!.waitForURL(`${server.baseUrl}/posts/new`);
+    await activePage!.getByLabel('Title').fill('Launch checklist');
+    await activePage!.getByLabel('Content').fill('Write flow support is ready for review.');
+    await activePage!.getByRole('button', { name: '등록' }).click();
+    await activePage!.waitForURL(`${server.baseUrl}/posts/101`);
+
+    const bundle = await app.stopRecording(sessionId);
+    const createStep = bundle.journey.steps.find((step) => step.title === 'Create post');
+    const createApi = bundle.journey.coreApis.find((api) => api.method === 'POST' && api.path === '/api/posts');
+    const k6Artifact = bundle.artifacts.find((artifact) => artifact.kind === 'k6');
+
+    expect((createStep as typeof createStep & { intent?: string })?.intent).toBe('create');
+    expect((createApi as typeof createApi & { payloadTemplate?: Record<string, string> })?.payloadTemplate).toEqual({
+      title: 'sample title',
+      content: 'sample content',
+    });
+    expect(k6Artifact?.content).toContain('http.post');
+    expect(k6Artifact?.content).toContain("'status is 2xx'");
+
+    const exportedPaths = await app.exportArtifacts(bundle.session.id, ['flow-doc', 'k6']);
+    expect(exportedPaths).toHaveLength(2);
+    expect(readFileSync(exportedPaths[1]!, 'utf8')).toContain('http.post');
+
+    await app.dispose();
+  }, 60_000);
+
+  it('records an update-post journey with write payload hints', async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), 'journeyforge-smoke-update-'));
+    const server = await startDemoTargetServer();
+    cleanup = server.close;
+
+    let activePage: Page | null = null;
+    const app = createJourneyForgeApp({
+      dataDir,
+      recorder: {
+        launchOptions: {
+          headless: true,
+        },
+        onPageReady(page) {
+          activePage = page;
+        },
+      },
+    });
+
+    const { sessionId } = await app.startRecording({
+      baseUrl: `${server.baseUrl}/login`,
+      name: 'Update Post Journey',
+    });
+
+    await activePage!.getByLabel('Email').fill('qa@example.com');
+    await activePage!.getByLabel('Password').fill('super-secret');
+    await activePage!.getByRole('button', { name: '로그인' }).click();
+    await activePage!.waitForURL(`${server.baseUrl}/products`);
+    await activePage!.getByRole('link', { name: 'JourneyForge roadmap' }).click();
+    await activePage!.waitForURL(`${server.baseUrl}/posts/99`);
+    await activePage!.getByRole('link', { name: '수정하기' }).click();
+    await activePage!.waitForURL(`${server.baseUrl}/posts/99/edit`);
+    await activePage!.getByLabel('Title').fill('JourneyForge roadmap v2');
+    await activePage!.getByLabel('Content').fill('Write flow coverage now includes payload templates.');
+    await activePage!.getByRole('button', { name: '저장' }).click();
+    await activePage!.waitForURL(`${server.baseUrl}/posts/99`);
+
+    const bundle = await app.stopRecording(sessionId);
+    const updateStep = bundle.journey.steps.find((step) => step.title === 'Update post');
+    const updateApi = bundle.journey.coreApis.find((api) => api.method === 'PATCH' && api.path === '/api/posts/99');
+    const k6Artifact = bundle.artifacts.find((artifact) => artifact.kind === 'k6');
+
+    expect((updateStep as typeof updateStep & { intent?: string })?.intent).toBe('update');
+    expect((updateApi as typeof updateApi & { payloadTemplate?: Record<string, string> })?.payloadTemplate).toEqual({
+      title: 'sample title',
+      content: 'sample content',
+    });
+    expect(k6Artifact?.content).toContain('http.patch');
+    expect(k6Artifact?.content).toContain("'status is 2xx'");
+
+    const exportedPaths = await app.exportArtifacts(bundle.session.id, ['flow-doc', 'k6']);
+    expect(exportedPaths).toHaveLength(2);
+    expect(readFileSync(exportedPaths[1]!, 'utf8')).toContain('http.patch');
+
+    await app.dispose();
+  }, 60_000);
 });

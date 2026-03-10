@@ -87,11 +87,16 @@ export type ApiCall = {
   scenarioSlug: string;
   isWrite: boolean;
   candidateForLoadTest: boolean;
+  payloadTemplate?: Record<string, string | number | boolean>;
+  expectedStatuses?: number[];
 };
+
+export type JourneyStepIntent = 'read' | 'create' | 'update' | 'auth' | 'navigation';
 
 export type JourneyStep = {
   id: string;
   title: string;
+  intent: JourneyStepIntent;
   pageUrl: string;
   startedAt: number;
   endedAt: number;

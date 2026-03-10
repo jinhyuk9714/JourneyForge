@@ -28,6 +28,14 @@ const demoProducts = [
   },
 ];
 
+const initialPosts = [
+  {
+    id: '99',
+    title: 'JourneyForge roadmap',
+    content: 'Initial roadmap for JourneyForge write flows.',
+  },
+];
+
 const sendJson = (response: import('node:http').ServerResponse, status: number, payload: unknown) => {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
   response.end(JSON.stringify(payload));
@@ -43,7 +51,19 @@ const sendFile = async (
   response.end(content);
 };
 
+const readJsonBody = async (request: import('node:http').IncomingMessage): Promise<Record<string, string>> => {
+  const chunks: Buffer[] = [];
+  for await (const chunk of request) {
+    chunks.push(Buffer.from(chunk));
+  }
+  const payload = Buffer.concat(chunks).toString('utf8');
+  return payload ? (JSON.parse(payload) as Record<string, string>) : {};
+};
+
 export const startDemoTargetServer = async (): Promise<DemoTargetServer> => {
+  const posts = [...initialPosts];
+  let nextPostId = 101;
+
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1');
 
@@ -69,6 +89,44 @@ export const startDemoTargetServer = async (): Promise<DemoTargetServer> => {
         return;
       }
       sendJson(response, 200, product);
+      return;
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/posts') {
+      const body = await readJsonBody(request);
+      const created = {
+        id: String(nextPostId),
+        title: body.title ?? '',
+        content: body.content ?? '',
+      };
+      nextPostId += 1;
+      posts.push(created);
+      sendJson(response, 201, created);
+      return;
+    }
+
+    if (request.method === 'PATCH' && url.pathname.startsWith('/api/posts/')) {
+      const postId = url.pathname.split('/').pop();
+      const body = await readJsonBody(request);
+      const post = posts.find((candidate) => candidate.id === postId);
+      if (!post) {
+        sendJson(response, 404, { message: 'Not found' });
+        return;
+      }
+      post.title = body.title ?? '';
+      post.content = body.content ?? '';
+      sendJson(response, 200, post);
+      return;
+    }
+
+    if (request.method === 'GET' && url.pathname.startsWith('/api/posts/')) {
+      const postId = url.pathname.split('/').pop();
+      const post = posts.find((candidate) => candidate.id === postId);
+      if (!post) {
+        sendJson(response, 404, { message: 'Not found' });
+        return;
+      }
+      sendJson(response, 200, post);
       return;
     }
 
