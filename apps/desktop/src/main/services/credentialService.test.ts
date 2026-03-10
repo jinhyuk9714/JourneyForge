@@ -11,6 +11,22 @@ const buildKeytar = () => ({
 });
 
 describe('createCredentialService', () => {
+  it('supports keytar imports that expose write methods under the default export', async () => {
+    const keytar = buildKeytar();
+    const service = createCredentialService({
+      loadKeytar: vi.fn(async () => ({
+        default: keytar,
+        getPassword: keytar.getPassword,
+      })),
+    });
+
+    await expect(service.setPlaywrightPassword('next-secret')).resolves.toBeUndefined();
+    await expect(service.clearPlaywrightPassword()).resolves.toBeUndefined();
+    await expect(service.getPlaywrightPassword()).resolves.toBe('super-secret');
+    expect(keytar.setPassword).toHaveBeenCalledWith('JourneyForge', 'playwright:test-password', 'next-secret');
+    expect(keytar.deletePassword).toHaveBeenCalledWith('JourneyForge', 'playwright:test-password');
+  });
+
   it('surfaces keytar load failures with a remediation hint', async () => {
     const service = createCredentialService({
       loadKeytar: vi.fn(async () => {

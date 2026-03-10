@@ -10,6 +10,10 @@ type KeytarModule = {
   deletePassword(service: string, account: string): Promise<unknown>;
 };
 
+type KeytarImport = Partial<KeytarModule> & {
+  default?: Partial<KeytarModule>;
+};
+
 export type CredentialStore = {
   getPlaywrightPassword(): Promise<string | null>;
   hasPlaywrightPassword(): Promise<boolean>;
@@ -20,9 +24,38 @@ export type CredentialStore = {
 
 export type CredentialService = CredentialStore;
 
+const isKeytarModule = (value: Partial<KeytarModule> | undefined): value is KeytarModule =>
+  Boolean(
+    value &&
+      typeof value.getPassword === 'function' &&
+      typeof value.setPassword === 'function' &&
+      typeof value.deletePassword === 'function',
+  );
+
+const resolveKeytarModule = (loaded: KeytarImport): KeytarModule => {
+  if (isKeytarModule(loaded)) {
+    return loaded;
+  }
+
+  if (isKeytarModule(loaded.default)) {
+    return loaded.default;
+  }
+
+  const merged = {
+    ...(loaded.default ?? {}),
+    ...loaded,
+  };
+
+  if (isKeytarModule(merged)) {
+    return merged;
+  }
+
+  throw new Error('Imported keytar module is missing getPassword, setPassword, or deletePassword.');
+};
+
 const loadKeytar = async (): Promise<KeytarModule> => {
   try {
-    return await import('keytar');
+    return resolveKeytarModule((await import('keytar')) as KeytarImport);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown keytar load error.';
     throw new Error(
@@ -49,10 +82,10 @@ const withCredentialFailure = (message: string, error: unknown): never => {
 export const createCredentialService = ({
   loadKeytar: loadKeytarImpl = loadKeytar,
 }: {
-  loadKeytar?: () => Promise<KeytarModule>;
+  loadKeytar?: () => Promise<KeytarImport>;
 } = {}): CredentialStore => ({
   async getPlaywrightPassword(): Promise<string | null> {
-    const keytar = await loadKeytarImpl().catch(withKeytarLoadFailure);
+    const keytar = resolveKeytarModule(await loadKeytarImpl().catch(withKeytarLoadFailure));
     try {
       return await keytar.getPassword(SERVICE_NAME, PLAYWRIGHT_PASSWORD_ACCOUNT);
     } catch (error) {
@@ -66,7 +99,7 @@ export const createCredentialService = ({
     return Boolean(await this.getPlaywrightPassword());
   },
   async setPlaywrightPassword(value: string) {
-    const keytar = await loadKeytarImpl().catch(withKeytarLoadFailure);
+    const keytar = resolveKeytarModule(await loadKeytarImpl().catch(withKeytarLoadFailure));
     try {
       await keytar.setPassword(SERVICE_NAME, PLAYWRIGHT_PASSWORD_ACCOUNT, value);
     } catch (error) {
@@ -77,7 +110,7 @@ export const createCredentialService = ({
     }
   },
   async clearPlaywrightPassword() {
-    const keytar = await loadKeytarImpl().catch(withKeytarLoadFailure);
+    const keytar = resolveKeytarModule(await loadKeytarImpl().catch(withKeytarLoadFailure));
     try {
       await keytar.deletePassword(SERVICE_NAME, PLAYWRIGHT_PASSWORD_ACCOUNT);
     } catch (error) {
