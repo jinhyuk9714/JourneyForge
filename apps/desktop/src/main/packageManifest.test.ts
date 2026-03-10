@@ -34,8 +34,15 @@ describe('desktop package manifest', () => {
     expect(packageJson.scripts?.['prepackage:mac']).toBe(
       'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && electron-builder install-app-deps',
     );
-    expect(packageJson.scripts?.['package:mac']).toBe(
-      'electron-builder --config electron-builder.yml --publish never',
+    expect(packageJson.scripts?.['package:mac']).toBe('electron-builder --config electron-builder.yml --publish never');
+    expect(packageJson.scripts?.['package:mac:dir']).toBe(
+      'electron-builder --config electron-builder.yml --dir --publish never',
+    );
+    expect(packageJson.scripts?.['pretest:package-smoke']).toBe(
+      'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && electron-builder install-app-deps && pnpm package:mac:dir',
+    );
+    expect(packageJson.scripts?.['test:package-smoke']).toBe(
+      'playwright test -c playwright.package-smoke.config.ts',
     );
   });
 
@@ -76,8 +83,9 @@ describe('desktop package manifest', () => {
     expect(builderConfig).toContain('directories:');
     expect(builderConfig).toContain('output: release');
     expect(builderConfig).toContain('target:');
-    expect(builderConfig).toContain('- dir');
+    expect(builderConfig).toContain('- dmg');
     expect(builderConfig).toContain('- zip');
+    expect(builderConfig).not.toContain('- dir');
     expect(builderConfig).toContain('identity: null');
   });
 });

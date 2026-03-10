@@ -15,7 +15,10 @@
     "pretest:smoke-execution-real": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && pnpm --filter @journeyforge/core exec playwright install chromium",
     "test:smoke-execution-real": "playwright test -c playwright.real-execution.config.ts",
     "prepackage:mac": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && electron-builder install-app-deps",
+    "pretest:package-smoke": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && electron-builder install-app-deps && pnpm package:mac:dir",
+    "test:package-smoke": "playwright test -c playwright.package-smoke.config.ts",
     "package:mac": "electron-builder --config electron-builder.yml --publish never",
+    "package:mac:dir": "electron-builder --config electron-builder.yml --dir --publish never",
     "test": "vitest run --passWithNoTests",
     "check-types": "tsc --noEmit -p tsconfig.json"
   },

@@ -27,6 +27,7 @@ pnpm smoke
 pnpm --filter @journeyforge/desktop test:e2e
 pnpm --filter @journeyforge/desktop test:smoke-real
 pnpm --filter @journeyforge/desktop test:smoke-execution-real
+pnpm --filter @journeyforge/desktop test:package-smoke
 pnpm --filter @journeyforge/desktop package:mac
 pnpm test
 pnpm build
@@ -56,7 +57,8 @@ pnpm build
 
 ## Packaged Desktop Baseline
 
-- `pnpm --filter @journeyforge/desktop package:mac` builds an unsigned macOS `.app` baseline and a `.zip` under `apps/desktop/release`
+- `pnpm --filter @journeyforge/desktop package:mac` builds an unsigned macOS `.dmg` and `.zip` under `apps/desktop/release`
+- `pnpm --filter @journeyforge/desktop test:package-smoke` builds a local unpacked `.app` and verifies packaged startup against the release executable
 - The packaged app keeps the same `data/` subdirectory layout, but stores it under Electron `userData` instead of the repo root
 - `settings.json`, session data, and exports appear there after the first settings/session interaction
 - Playwright, k6, and keychain behavior still depend on the local machine toolchain and macOS keychain
@@ -85,6 +87,11 @@ pnpm build
 - The suite records the `login -> search -> detail` flow, then runs the generated Playwright and k6 bundles from inside Electron
 - `k6` must already be installed and available on your local `PATH`
 
+## Packaged App Smoke
+
+- `pnpm --filter @journeyforge/desktop test:package-smoke` launches the release `.app` executable instead of the built Electron entrypoint
+- The suite verifies packaged renderer/main/preload bootstrap and confirms packaged persistence under Electron `userData/data`
+
 ## Manual Validation Checklist
 
 1. Run `pnpm demo-target`
@@ -100,11 +107,9 @@ pnpm build
 11. Export at least one artifact and confirm a file appears under `data/exports`
 12. Save, replace, and clear the Playwright password from `Settings`
 13. Restart the app and confirm the credential status still matches the OS keychain state
-14. Run `pnpm --filter @journeyforge/desktop package:mac` and confirm `apps/desktop/release/JourneyForge.app` is produced
-15. Launch the packaged app once, open `Settings` or start a recording, and confirm it writes data under the packaged `userData` location
+14. Run `pnpm --filter @journeyforge/desktop package:mac` and confirm `.dmg` and `.zip` artifacts are produced under `apps/desktop/release`
 
 ## Current Limits
 
 - OS keychain-backed credential flow is still manually validated on a developer machine
-- Packaged app startup is still manually validated on a developer machine
-- Installer behavior and code signing are still outside automated coverage
+- Code signing, notarization, and installer trust are still outside automated coverage

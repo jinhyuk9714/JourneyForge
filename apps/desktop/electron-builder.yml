@@ -21,7 +21,7 @@ mac:
   category: public.app-category.developer-tools
   identity: null
   target:
-    - dir
+    - dmg
     - zip
 
 artifactName: ${productName}-${version}-${arch}.${ext}
