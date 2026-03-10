@@ -10,10 +10,22 @@ describe('desktop package manifest', () => {
     const packageJsonPath = resolve(__dirname, '../../package.json');
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
       main?: string;
+      description?: string;
       scripts?: Record<string, string>;
+    };
+    const rootPackageJson = JSON.parse(
+      readFileSync(resolve(__dirname, '../../../../package.json'), 'utf8'),
+    ) as {
+      description?: string;
     };
 
     expect(packageJson.main).toBe('out/main/index.js');
+    expect(packageJson.description).toBe(
+      '브라우저 여정을 기록해 Playwright 테스트, API 흐름 문서, k6 초안을 생성하는 로컬 우선 데스크톱 앱',
+    );
+    expect(rootPackageJson.description).toBe(
+      '브라우저 여정을 Playwright 테스트, API 흐름 문서, k6 초안으로 바꾸는 로컬 우선 워크스페이스',
+    );
     expect(packageJson.scripts?.predev).toBe(
       'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build',
     );

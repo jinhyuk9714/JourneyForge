@@ -13,13 +13,13 @@ test('desktop shell runs the generated k6 bundle against the real local toolchai
     await page.getByRole('button', { name: 'k6 실행' }).click();
 
     await expect(page.getByTestId('execution-status')).toContainText('k6');
-    await expect(page.getByTestId('execution-status')).toContainText('succeeded', {
+    await expect(page.getByTestId('execution-status')).toContainText('성공', {
       timeout: 180_000,
     });
-    await expect(page.getByTestId('execution-log-panel')).toContainText('Running: k6 version', {
+    await expect(page.getByTestId('execution-log-panel')).toContainText('실행: k6 version', {
       timeout: 180_000,
     });
-    await expect(page.getByTestId('execution-log-panel')).toContainText('Running: k6 run recorded-journey.js', {
+    await expect(page.getByTestId('execution-log-panel')).toContainText('실행: k6 run recorded-journey.js', {
       timeout: 180_000,
     });
     await expect(page.getByTestId('execution-log-panel')).toContainText('k6 v', {

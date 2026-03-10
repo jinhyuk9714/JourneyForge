@@ -2,7 +2,8 @@ import type { CredentialStatus } from '@journeyforge/shared';
 
 const SERVICE_NAME = 'JourneyForge';
 const PLAYWRIGHT_PASSWORD_ACCOUNT = 'playwright:test-password';
-const KEYTAR_LOAD_FAILURE_PREFIX = 'Failed to load the macOS keychain integration.';
+const KEYTAR_LOAD_FAILURE_PREFIX = 'macOS 키체인 연동을 불러오지 못했습니다.';
+const LEGACY_KEYTAR_LOAD_FAILURE_PREFIX = 'Failed to load the macOS keychain integration.';
 
 type KeytarModule = {
   getPassword(service: string, account: string): Promise<string | null>;
@@ -59,7 +60,7 @@ const loadKeytar = async (): Promise<KeytarModule> => {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown keytar load error.';
     throw new Error(
-      `Failed to load the macOS keychain integration. Approve and rebuild native dependencies, then retry. Original error: ${message}`,
+      `macOS 키체인 연동을 불러오지 못했습니다. 네이티브 의존성을 승인하고 다시 빌드한 뒤 다시 시도하세요. Original error: ${message}`,
     );
   }
 };
@@ -68,9 +69,18 @@ const withKeytarLoadFailure = (error: unknown): never => {
   if (error instanceof Error && error.message.startsWith(KEYTAR_LOAD_FAILURE_PREFIX)) {
     throw error;
   }
+
+  if (error instanceof Error && error.message.startsWith(LEGACY_KEYTAR_LOAD_FAILURE_PREFIX)) {
+    const originalDetail = error.message.includes('Original error:')
+      ? error.message.split('Original error:').slice(1).join('Original error:').trim()
+      : error.message;
+    throw new Error(
+      `macOS 키체인 연동을 불러오지 못했습니다. 네이티브 의존성을 승인하고 다시 빌드한 뒤 다시 시도하세요. Original error: ${originalDetail}`,
+    );
+  }
   const message = error instanceof Error ? error.message : 'Unknown keytar load error.';
   throw new Error(
-    `Failed to load the macOS keychain integration. Approve and rebuild native dependencies, then retry. Original error: ${message}`,
+    `macOS 키체인 연동을 불러오지 못했습니다. 네이티브 의존성을 승인하고 다시 빌드한 뒤 다시 시도하세요. Original error: ${message}`,
   );
 };
 
@@ -90,7 +100,7 @@ export const createCredentialService = ({
       return await keytar.getPassword(SERVICE_NAME, PLAYWRIGHT_PASSWORD_ACCOUNT);
     } catch (error) {
       return withCredentialFailure(
-        'Failed to read the Playwright password from the macOS keychain. Open Keychain Access, verify JourneyForge access, then retry.',
+        'macOS 키체인에서 Playwright 비밀번호를 읽지 못했습니다. 키체인 접근 권한과 JourneyForge 항목을 확인한 뒤 다시 시도하세요.',
         error,
       );
     }
@@ -104,7 +114,7 @@ export const createCredentialService = ({
       await keytar.setPassword(SERVICE_NAME, PLAYWRIGHT_PASSWORD_ACCOUNT, value);
     } catch (error) {
       return withCredentialFailure(
-        'Failed to save the Playwright password to the macOS keychain. Unlock the login keychain or review keychain access prompts, then retry.',
+        'macOS 키체인에 Playwright 비밀번호를 저장하지 못했습니다. 로그인 키체인을 잠금 해제하거나 접근 권한 요청을 확인한 뒤 다시 시도하세요.',
         error,
       );
     }
@@ -115,7 +125,7 @@ export const createCredentialService = ({
       await keytar.deletePassword(SERVICE_NAME, PLAYWRIGHT_PASSWORD_ACCOUNT);
     } catch (error) {
       return withCredentialFailure(
-        'Failed to remove the Playwright password from the macOS keychain. Verify the JourneyForge keychain item still exists, then retry.',
+        'macOS 키체인에서 Playwright 비밀번호를 삭제하지 못했습니다. JourneyForge 키체인 항목이 남아 있는지 확인한 뒤 다시 시도하세요.',
         error,
       );
     }

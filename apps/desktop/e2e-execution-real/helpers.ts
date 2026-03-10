@@ -51,7 +51,7 @@ export const launchRealExecutionScenario = async (target: RealExecutionSmokeTarg
   });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByRole('heading', { name: /Record once\. Generate engineering assets instantly\./i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /한 번 기록하고, 개발 자산을 바로 생성하세요\./i })).toBeVisible();
 
   return {
     app,
@@ -67,7 +67,7 @@ export const launchRealExecutionScenario = async (target: RealExecutionSmokeTarg
 };
 
 export const completeRecordedJourney = async (page: Page, baseUrl: string, dataDir: string) => {
-  const targetUrlInput = page.getByLabel('Target URL');
+  const targetUrlInput = page.getByLabel('대상 URL');
   await targetUrlInput.click();
   await targetUrlInput.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
   await targetUrlInput.fill(`${baseUrl}/login`);
@@ -76,5 +76,5 @@ export const completeRecordedJourney = async (page: Page, baseUrl: string, dataD
   await expect(page.getByText('녹화 중')).toBeVisible();
   await waitForRealSmokeCompletion(dataDir);
   await page.getByRole('button', { name: '기록 종료' }).click();
-  await expect(page.getByRole('heading', { name: 'Recorded Journey' })).toBeVisible();
+  await expect(page.getByText('기록된 여정')).toBeVisible();
 };

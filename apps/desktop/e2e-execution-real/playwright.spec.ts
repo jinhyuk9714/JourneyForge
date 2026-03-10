@@ -13,16 +13,16 @@ test('desktop shell runs the generated Playwright bundle against the real local 
     await page.getByRole('button', { name: 'Playwright 실행' }).click();
 
     await expect(page.getByTestId('execution-status')).toContainText('Playwright');
-    await expect(page.getByTestId('execution-status')).toContainText('succeeded', {
+    await expect(page.getByTestId('execution-status')).toContainText('성공', {
       timeout: 300_000,
     });
-    await expect(page.getByTestId('execution-log-panel')).toContainText('Running: npm install', {
+    await expect(page.getByTestId('execution-log-panel')).toContainText('실행: npm install', {
       timeout: 300_000,
     });
-    await expect(page.getByTestId('execution-log-panel')).toContainText('Running: npx playwright install chromium', {
+    await expect(page.getByTestId('execution-log-panel')).toContainText('실행: npx playwright install chromium', {
       timeout: 300_000,
     });
-    await expect(page.getByTestId('execution-log-panel')).toContainText('Running: npx playwright test', {
+    await expect(page.getByTestId('execution-log-panel')).toContainText('실행: npx playwright test', {
       timeout: 300_000,
     });
     await expect(page.getByTestId('execution-log-panel')).toContainText('1 passed', {

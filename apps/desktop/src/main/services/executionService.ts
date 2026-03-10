@@ -67,7 +67,7 @@ class ExecutionFailure extends Error {
 
 class ExecutionCancelled extends Error {
   constructor(readonly exitCode = 130) {
-    super('Execution cancelled.');
+    super('실행이 취소되었습니다.');
   }
 }
 
@@ -212,7 +212,7 @@ export const createExecutionService = (options: ExecutionServiceOptions) => {
     if (snapshot.runId !== runId) {
       return;
     }
-    pushLog('system', 'Execution cancelled.');
+    pushLog('system', '실행이 취소되었습니다.');
     snapshot = {
       ...snapshot,
       state: 'cancelled',
@@ -232,12 +232,12 @@ export const createExecutionService = (options: ExecutionServiceOptions) => {
   ) => {
     if (target === 'playwright') {
       if (!settings.execution.testEmail) {
-        throw new ExecutionFailure('Set a test email in Settings before running Playwright.');
+        throw new ExecutionFailure('Playwright를 실행하기 전에 설정에서 테스트 이메일을 입력하세요.');
       }
 
       const password = await options.credentialStore.getPlaywrightPassword();
       if (!password) {
-        throw new ExecutionFailure('Save a Playwright password in Settings before running Playwright.');
+        throw new ExecutionFailure('Playwright를 실행하기 전에 설정에서 비밀번호를 저장하세요.');
       }
 
       const markerPath = browserInstallMarkerPath(options.dataDir);
@@ -277,7 +277,7 @@ export const createExecutionService = (options: ExecutionServiceOptions) => {
     updateSnapshot({
       state: command.phase,
     });
-    pushLog('system', `Running: ${command.label}`);
+    pushLog('system', `실행: ${command.label}`);
     const handle = processRunner.start({
       command: command.command,
       args: command.args,
@@ -311,7 +311,7 @@ export const createExecutionService = (options: ExecutionServiceOptions) => {
       ]);
 
       if (!bundleExport.bundlePath) {
-        throw new ExecutionFailure('Failed to export a runnable bundle for this session.');
+        throw new ExecutionFailure('이 세션의 실행 가능한 번들을 내보내지 못했습니다.');
       }
 
       updateSnapshot({
@@ -334,14 +334,14 @@ export const createExecutionService = (options: ExecutionServiceOptions) => {
         failRun(runId, error.message, error.exitCode);
         return;
       }
-      failRun(runId, error instanceof Error ? error.message : 'Execution failed unexpectedly.');
+      failRun(runId, error instanceof Error ? error.message : '실행 중 예기치 못한 오류가 발생했습니다.');
     }
   };
 
   return {
     async start(input: { sessionId: string; target: ExecutionTarget }) {
       if (activeExecution && (snapshot.state === 'preparing' || snapshot.state === 'running')) {
-        throw new Error('Another execution is already in progress.');
+        throw new Error('다른 실행이 이미 진행 중입니다.');
       }
 
       const runId = randomUUID();

@@ -19,16 +19,16 @@ test('desktop shell records and previews the real create-post flow', async () =>
     const createStep = page.getByTestId('journey-step-create-post');
 
     await expect(page.locator('[data-testid^="session-row-"]').first()).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Recorded Journey' })).toBeVisible();
+    await expect(page.getByText('기록된 여정')).toBeVisible();
     await expect(page.getByText('Create post')).toBeVisible();
-    await expect(createStep).toContainText('Why this step');
-    await expect(createStep).toContainText('API evidence');
+    await expect(createStep).toContainText('이 단계로 분류한 이유');
+    await expect(createStep).toContainText('API 근거');
     await expect(page.getByTestId('journey-k6-evidence')).toBeVisible();
 
     await page.getByTestId('artifact-tab-k6').click();
     await expect(page.getByText('http.post')).toBeVisible();
     await page.getByRole('button', { name: '실행 번들 내보내기' }).click();
-    await expect(page.getByTestId('export-message')).toContainText('Bundle exported to');
+    await expect(page.getByTestId('export-message')).toContainText('번들을');
   } finally {
     await runtime.close();
   }

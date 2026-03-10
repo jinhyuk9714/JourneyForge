@@ -99,7 +99,7 @@ describe('createFakeDesktopRuntime', () => {
     });
 
     const snapshot = await runtime.getExecutionStatus();
-    expect(snapshot.logs.map((entry) => entry.message).join('\n')).toContain('Execution cancelled by user.');
+    expect(snapshot.logs.map((entry) => entry.message).join('\n')).toContain('사용자가 실행을 취소했습니다.');
 
     await runtime.dispose();
   });

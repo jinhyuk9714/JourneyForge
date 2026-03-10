@@ -9,7 +9,7 @@ const parseAnalyticsPatterns = (value: string) =>
     .map((pattern) => pattern.trim())
     .filter(Boolean);
 
-const toErrorMessage = (error: unknown) => (error instanceof Error ? error.message : 'Failed to update settings.');
+const toErrorMessage = (error: unknown) => (error instanceof Error ? error.message : '설정을 업데이트하지 못했습니다.');
 
 export const SettingsPage = () => {
   const [settings, setSettings] = useState<JourneyForgeSettings>(DEFAULT_SETTINGS);
@@ -89,7 +89,7 @@ export const SettingsPage = () => {
     }
     setCredentialFeedback({
       tone: 'saving',
-      message: 'Saving the Playwright password to the OS keychain...',
+      message: 'Playwright 비밀번호를 운영체제 키체인에 저장하는 중입니다...',
     });
     void window.journeyforge.credentials
       .setPlaywrightPassword({ value: passwordValue })
@@ -98,7 +98,7 @@ export const SettingsPage = () => {
         setPasswordValue('');
         setCredentialFeedback({
           tone: 'success',
-          message: 'Playwright password saved to the OS keychain.',
+          message: 'Playwright 비밀번호를 운영체제 키체인에 저장했습니다.',
         });
       })
       .catch((cause) => {
@@ -112,7 +112,7 @@ export const SettingsPage = () => {
   const clearPassword = () => {
     setCredentialFeedback({
       tone: 'saving',
-      message: 'Removing the Playwright password from the OS keychain...',
+      message: 'Playwright 비밀번호를 운영체제 키체인에서 삭제하는 중입니다...',
     });
     void window.journeyforge.credentials
       .clearPlaywrightPassword()
@@ -121,7 +121,7 @@ export const SettingsPage = () => {
         setPasswordValue('');
         setCredentialFeedback({
           tone: 'success',
-          message: 'Playwright password removed from the OS keychain.',
+          message: 'Playwright 비밀번호를 운영체제 키체인에서 삭제했습니다.',
         });
       })
       .catch((cause) => {
@@ -135,19 +135,19 @@ export const SettingsPage = () => {
   return (
     <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
       <div className="max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Settings</p>
-        <h2 className="font-display text-3xl text-ink">Tune runtime inputs, noisy traffic filters, and execution defaults.</h2>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">설정</p>
+        <h2 className="font-display text-3xl text-ink">실행 입력값, 노이즈 필터, 기본값을 조정하세요.</h2>
         <p className="mt-2 text-sm text-ink/65">
-          Saved to <code>data/settings.json</code>. Changes apply to sessions that start after the save completes.
+          <code>data/settings.json</code>에 저장됩니다. 저장이 끝난 뒤 시작하는 세션부터 변경 사항이 적용됩니다.
         </p>
         <p className="mt-2 text-xs text-ink/55">
           {settingsStatus === 'loading'
-            ? 'Loading current settings...'
+            ? '현재 설정을 불러오는 중입니다...'
             : settingsStatus === 'saving'
-              ? 'Saving updates for the next recording...'
+              ? '다음 녹화에 적용할 설정을 저장하는 중입니다...'
               : settingsStatus === 'error'
-                ? settingsError ?? 'Failed to update settings.'
-                : 'Current settings are active for the next recording.'}
+                ? settingsError ?? '설정을 업데이트하지 못했습니다.'
+                : '현재 설정이 다음 녹화부터 적용됩니다.'}
         </p>
       </div>
 
@@ -155,12 +155,14 @@ export const SettingsPage = () => {
         <div className="space-y-6">
           <div className="rounded-3xl border border-ink/10 bg-sand/90 p-5">
             <label htmlFor="analytics-patterns" className="font-display text-xl text-ink">
-              Analytics filters
+              분석/추적 필터
             </label>
-            <p className="mt-2 text-sm text-ink/65">One pattern per line. Matching requests are ignored during journey normalization.</p>
+            <p className="mt-2 text-sm text-ink/65">
+              한 줄에 하나씩 입력하세요. 일치하는 요청은 여정 정규화에서 제외됩니다.
+            </p>
             <textarea
               id="analytics-patterns"
-              aria-label="Analytics filters"
+              aria-label="분석/추적 필터"
               className="mt-4 min-h-40 w-full rounded-3xl border border-ink/10 bg-white px-4 py-3 font-mono text-sm text-ink"
               value={settings.analyticsPatterns.join('\n')}
               onChange={(event) =>
@@ -173,16 +175,16 @@ export const SettingsPage = () => {
           </div>
 
           <div className="rounded-3xl border border-ink/10 bg-sand/90 p-5">
-            <h3 className="font-display text-xl text-ink">Execution defaults</h3>
+            <h3 className="font-display text-xl text-ink">실행 기본값</h3>
             <p className="mt-2 text-sm text-ink/65">
-              Use these values when running generated Playwright and k6 bundles from inside the app.
+              앱 안에서 생성된 Playwright와 k6 번들을 실행할 때 사용할 기본값입니다.
             </p>
             <div className="mt-4 grid gap-4">
               <label htmlFor="playwright-test-email" className="flex flex-col gap-2 text-sm text-ink">
-                <span>Playwright test email</span>
+                <span>Playwright 테스트 이메일</span>
                 <input
                   id="playwright-test-email"
-                  aria-label="Playwright test email"
+                  aria-label="Playwright 테스트 이메일"
                   className="rounded-2xl border border-ink/10 bg-white px-3 py-2 text-ink"
                   type="email"
                   value={settings.execution.testEmail}
@@ -198,10 +200,10 @@ export const SettingsPage = () => {
                 />
               </label>
               <label htmlFor="playwright-base-url" className="flex flex-col gap-2 text-sm text-ink">
-                <span>Playwright base URL</span>
+                <span>Playwright 기본 URL</span>
                 <input
                   id="playwright-base-url"
-                  aria-label="Playwright base URL"
+                  aria-label="Playwright 기본 URL"
                   className="rounded-2xl border border-ink/10 bg-white px-3 py-2 text-ink"
                   type="url"
                   value={settings.execution.playwrightBaseUrl}
@@ -217,10 +219,10 @@ export const SettingsPage = () => {
                 />
               </label>
               <label htmlFor="k6-base-url" className="flex flex-col gap-2 text-sm text-ink">
-                <span>k6 base URL</span>
+                <span>k6 기본 URL</span>
                 <input
                   id="k6-base-url"
-                  aria-label="k6 base URL"
+                  aria-label="k6 기본 URL"
                   className="rounded-2xl border border-ink/10 bg-white px-3 py-2 text-ink"
                   type="url"
                   value={settings.execution.k6BaseUrl}
@@ -241,7 +243,7 @@ export const SettingsPage = () => {
 
         <div className="space-y-4 rounded-3xl border border-ink/10 bg-ink p-5 text-sand">
           <label htmlFor="mask-email-inputs" className="flex items-center justify-between gap-4">
-            <span className="text-sm">Mask email inputs</span>
+            <span className="text-sm">이메일 입력값 마스킹</span>
             <input
               id="mask-email-inputs"
               type="checkbox"
@@ -255,10 +257,10 @@ export const SettingsPage = () => {
             />
           </label>
           <label htmlFor="k6-duration-threshold" className="flex flex-col gap-2 text-sm">
-            <span>k6 p95 threshold (ms)</span>
+            <span>k6 p95 임계값 (ms)</span>
             <input
               id="k6-duration-threshold"
-              aria-label="k6 p95 threshold (ms)"
+              aria-label="k6 p95 임계값 (ms)"
               className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sand"
               type="number"
               value={settings.k6Thresholds.httpReqDurationP95}
@@ -274,10 +276,10 @@ export const SettingsPage = () => {
             />
           </label>
           <label htmlFor="k6-failed-threshold" className="flex flex-col gap-2 text-sm">
-            <span>k6 error-rate threshold</span>
+            <span>k6 오류율 임계값</span>
             <input
               id="k6-failed-threshold"
-              aria-label="k6 error-rate threshold"
+              aria-label="k6 오류율 임계값"
               className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sand"
               type="number"
               min="0"
@@ -297,8 +299,12 @@ export const SettingsPage = () => {
           </label>
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sand/60">Keychain</p>
-            <p className="mt-3 text-sm">{credentialStatus.hasPlaywrightPassword ? 'Playwright password configured' : 'Playwright password not configured'}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sand/60">키체인</p>
+            <p className="mt-3 text-sm">
+              {credentialStatus.hasPlaywrightPassword
+                ? 'Playwright 비밀번호가 설정되어 있습니다'
+                : 'Playwright 비밀번호가 설정되지 않았습니다'}
+            </p>
             {credentialFeedback.message ? (
               <p
                 className={`mt-2 text-xs ${
@@ -313,10 +319,10 @@ export const SettingsPage = () => {
               </p>
             ) : null}
             <label htmlFor="playwright-password" className="mt-4 flex flex-col gap-2 text-sm">
-              <span>Playwright password</span>
+              <span>Playwright 비밀번호</span>
               <input
                 id="playwright-password"
-                aria-label="Playwright password"
+                aria-label="Playwright 비밀번호"
                 className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sand"
                 type="password"
                 value={passwordValue}

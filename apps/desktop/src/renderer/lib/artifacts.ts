@@ -5,7 +5,7 @@ export const artifactLabel = (kind: ArtifactKind): string => {
     return 'Playwright';
   }
   if (kind === 'flow-doc') {
-    return 'Flow Markdown';
+    return '플로우 문서';
   }
   return 'k6';
 };

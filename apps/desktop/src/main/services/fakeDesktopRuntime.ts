@@ -475,15 +475,15 @@ export const createFakeDesktopRuntime = ({
       setExecutionSnapshot({
         state: 'running',
       });
-      pushExecutionLog('system', `Running ${target} bundle for ${sessionId}.`);
-      pushExecutionLog('stdout', `${target} line: bundle ready`);
+      pushExecutionLog('system', `${sessionId} 세션의 ${target} 번들을 실행하는 중입니다.`);
+      pushExecutionLog('stdout', `${target} 출력: 번들이 준비되었습니다.`);
 
       if (mode === 'auto-success') {
         const succeedTimer = setTimeout(() => {
           if (!activeRun || activeRun.runId !== runId) {
             return;
           }
-          pushExecutionLog('stdout', `${target} line: completed successfully`);
+          pushExecutionLog('stdout', `${target} 출력: 성공적으로 완료되었습니다.`);
           setExecutionSnapshot({
             state: 'succeeded',
             exitCode: 0,
@@ -501,7 +501,7 @@ export const createFakeDesktopRuntime = ({
       setExecutionSnapshot({
         state: 'preparing',
       });
-      pushExecutionLog('system', `Preparing ${target} bundle for ${sessionId}.`);
+      pushExecutionLog('system', `${sessionId} 세션의 ${target} 번들을 준비하는 중입니다.`);
       const runningTimer = setTimeout(finishRunning, 70);
       timerIds.push(runningTimer);
     }, 30);
@@ -728,7 +728,7 @@ export default defineConfig({
     },
     async startExecution(input: { sessionId: string; target: ExecutionTarget }) {
       if (activeRun && (executionSnapshot.state === 'preparing' || executionSnapshot.state === 'running')) {
-        throw new Error('Another execution is already in progress.');
+        throw new Error('다른 실행이 이미 진행 중입니다.');
       }
 
       const bundleExport = await this.exportBundle(input.sessionId);
@@ -769,7 +769,7 @@ export default defineConfig({
       }
 
       clearActiveRun();
-      pushExecutionLog('system', 'Execution cancelled by user.');
+      pushExecutionLog('system', '사용자가 실행을 취소했습니다.');
       executionSnapshot = {
         ...executionSnapshot,
         state: 'cancelled',

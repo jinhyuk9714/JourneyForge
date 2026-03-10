@@ -25,7 +25,7 @@ describe('RecordPanel', () => {
     );
 
     expect(screen.getByText('녹화 중')).toBeInTheDocument();
-    expect(screen.getByText('12 events')).toBeInTheDocument();
+    expect(screen.getByText('12개 이벤트')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '기록 종료' }));
 

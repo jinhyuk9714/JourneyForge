@@ -1,5 +1,7 @@
 import type { SessionSummary } from '@journeyforge/shared';
 
+import { artifactLabel } from '../lib/artifacts';
+
 type SessionListProps = {
   sessions: SessionSummary[];
   selectedSessionId: string | null;
@@ -10,8 +12,8 @@ export const SessionList = ({ sessions, selectedSessionId, onSelect }: SessionLi
   <aside className="rounded-[28px] border border-ink/10 bg-white/85 p-4 shadow-panel">
     <div className="mb-4 flex items-center justify-between">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Sessions</p>
-        <h3 className="font-display text-2xl text-ink">Recent recordings</h3>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">세션</p>
+        <h3 className="font-display text-2xl text-ink">최근 녹화</h3>
       </div>
       <span className="rounded-full bg-ink px-3 py-1 font-mono text-xs text-sand">{sessions.length}</span>
     </div>
@@ -19,7 +21,7 @@ export const SessionList = ({ sessions, selectedSessionId, onSelect }: SessionLi
     <div className="space-y-3">
       {sessions.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-ink/15 px-4 py-5 text-sm text-ink/60">
-          No sessions yet. Start a recording to populate the timeline.
+          아직 세션이 없습니다. 녹화를 시작하면 타임라인이 채워집니다.
         </div>
       ) : (
         sessions.map((session) => {
@@ -41,7 +43,10 @@ export const SessionList = ({ sessions, selectedSessionId, onSelect }: SessionLi
                 {new Date(session.startedAt).toLocaleString()}
               </span>
               <span className={`mt-2 text-xs ${selected ? 'text-sand/75' : 'text-ink/65'}`}>
-                {session.stepCount} steps · {session.artifactKinds.join(', ') || 'no artifacts'}
+                {session.stepCount}단계 ·{' '}
+                {session.artifactKinds.length > 0
+                  ? session.artifactKinds.map(artifactLabel).join(', ')
+                  : '산출물 없음'}
               </span>
             </button>
           );

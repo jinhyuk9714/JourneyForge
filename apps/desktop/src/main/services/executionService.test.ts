@@ -210,7 +210,7 @@ describe('createExecutionService', () => {
       expect(service.getStatus().state).toBe('failed');
     });
 
-    expect(service.getStatus().error).toContain('Install k6');
+    expect(service.getStatus().error).toContain('k6를 설치');
     expect(service.getStatus().logs.map((entry) => entry.message).join('\n')).toContain('k6 version');
   });
 
@@ -251,7 +251,7 @@ describe('createExecutionService', () => {
     });
 
     await expect(service.start({ sessionId: 'session-3', target: 'k6' })).rejects.toThrow(
-      'Another execution is already in progress.',
+      '다른 실행이 이미 진행 중입니다.',
     );
 
     const cancelled = await service.cancel({ runId });

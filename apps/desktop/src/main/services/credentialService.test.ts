@@ -35,7 +35,7 @@ describe('createCredentialService', () => {
     });
 
     await expect(service.getStatus()).rejects.toThrow(
-      'Failed to load the macOS keychain integration. Approve and rebuild native dependencies, then retry. Original error: native module missing',
+      'macOS 키체인 연동을 불러오지 못했습니다. 네이티브 의존성을 승인하고 다시 빌드한 뒤 다시 시도하세요. Original error: native module missing',
     );
   });
 
@@ -49,7 +49,7 @@ describe('createCredentialService', () => {
     });
 
     await expect(service.getStatus()).rejects.toThrow(
-      'Failed to load the macOS keychain integration. Approve and rebuild native dependencies, then retry. Original error: native module missing',
+      'macOS 키체인 연동을 불러오지 못했습니다. 네이티브 의존성을 승인하고 다시 빌드한 뒤 다시 시도하세요. Original error: native module missing',
     );
   });
 
@@ -62,7 +62,7 @@ describe('createCredentialService', () => {
     });
 
     await expect(service.getStatus()).rejects.toThrow(
-      'Failed to read the Playwright password from the macOS keychain. Open Keychain Access, verify JourneyForge access, then retry. Original error: User interaction is not allowed.',
+      'macOS 키체인에서 Playwright 비밀번호를 읽지 못했습니다. 키체인 접근 권한과 JourneyForge 항목을 확인한 뒤 다시 시도하세요. Original error: User interaction is not allowed.',
     );
   });
 
@@ -75,7 +75,7 @@ describe('createCredentialService', () => {
     });
 
     await expect(service.setPlaywrightPassword('next-secret')).rejects.toThrow(
-      'Failed to save the Playwright password to the macOS keychain. Unlock the login keychain or review keychain access prompts, then retry. Original error: The keychain is locked.',
+      'macOS 키체인에 Playwright 비밀번호를 저장하지 못했습니다. 로그인 키체인을 잠금 해제하거나 접근 권한 요청을 확인한 뒤 다시 시도하세요. Original error: The keychain is locked.',
     );
   });
 
@@ -88,7 +88,7 @@ describe('createCredentialService', () => {
     });
 
     await expect(service.clearPlaywrightPassword()).rejects.toThrow(
-      'Failed to remove the Playwright password from the macOS keychain. Verify the JourneyForge keychain item still exists, then retry. Original error: The specified item could not be found in the keychain.',
+      'macOS 키체인에서 Playwright 비밀번호를 삭제하지 못했습니다. JourneyForge 키체인 항목이 남아 있는지 확인한 뒤 다시 시도하세요. Original error: The specified item could not be found in the keychain.',
     );
   });
 });

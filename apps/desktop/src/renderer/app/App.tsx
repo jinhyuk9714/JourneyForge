@@ -42,7 +42,7 @@ export const App = () => {
         <header className="mb-6 flex flex-wrap items-start justify-between gap-4 rounded-[32px] bg-white/70 px-6 py-5 shadow-panel backdrop-blur">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ink/45">JourneyForge MVP</p>
-            <h1 className="font-display text-4xl text-ink">Record once. Generate engineering assets instantly.</h1>
+            <h1 className="font-display text-4xl text-ink">한 번 기록하고, 개발 자산을 바로 생성하세요.</h1>
           </div>
           <nav className="flex items-center gap-2">
             <button
@@ -50,14 +50,14 @@ export const App = () => {
               className={`rounded-full px-4 py-2 text-sm font-semibold ${view === 'home' ? 'bg-ink text-sand' : 'bg-sand text-ink'}`}
               onClick={() => setView('home')}
             >
-              Home
+              홈
             </button>
             <button
               type="button"
               className={`rounded-full px-4 py-2 text-sm font-semibold ${view === 'settings' ? 'bg-ink text-sand' : 'bg-sand text-ink'}`}
               onClick={() => setView('settings')}
             >
-              Settings
+              설정
             </button>
           </nav>
         </header>

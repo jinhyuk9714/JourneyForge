@@ -30,7 +30,7 @@ export const launchPackagedApp = async (): Promise<{
 
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByRole('heading', { name: /Record once\. Generate engineering assets instantly\./i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /한 번 기록하고, 개발 자산을 바로 생성하세요\./i })).toBeVisible();
   const userDataDir = await app.evaluate(async ({ app }) => app.getPath('userData'));
 
   return {

@@ -47,7 +47,7 @@ describe('FilePreviewTabs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Playwright 실행' }));
     expect(onRun).toHaveBeenCalledWith('playwright');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Flow Markdown' }));
+    fireEvent.click(screen.getByRole('button', { name: '플로우 문서' }));
     expect(screen.getByText('# Journey: Login Search Detail')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /실행$/ })).not.toBeInTheDocument();
 

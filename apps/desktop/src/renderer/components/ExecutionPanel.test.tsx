@@ -35,7 +35,7 @@ describe('ExecutionPanel', () => {
 
     render(<ExecutionPanel sessionId="session-1" snapshot={runningSnapshot} onCancel={onCancel} />);
 
-    expect(screen.getByText('Playwright · running')).toBeInTheDocument();
+    expect(screen.getByText('Playwright · 실행 중')).toBeInTheDocument();
     expect(screen.getByText('Running: npx playwright test')).toBeInTheDocument();
     expect(screen.getByText('1 passed')).toBeInTheDocument();
 

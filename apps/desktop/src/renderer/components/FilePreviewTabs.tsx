@@ -22,7 +22,7 @@ export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle, onRun }: 
   if (!activeArtifact) {
     return (
       <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
-        <p className="text-sm text-ink/60">No generated artifacts available for this session.</p>
+        <p className="text-sm text-ink/60">이 세션에는 생성된 산출물이 없습니다.</p>
       </section>
     );
   }
@@ -31,8 +31,8 @@ export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle, onRun }: 
     <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Generated output</p>
-          <h3 className="font-display text-2xl text-ink">Preview and export</h3>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">생성 결과</p>
+          <h3 className="font-display text-2xl text-ink">미리보기 및 내보내기</h3>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {runnableTarget ? (
@@ -89,7 +89,7 @@ export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle, onRun }: 
             </pre>
           </>
         ) : (
-          <div className="px-5 py-8 text-sm text-sand/80">{activeArtifact.reason ?? 'No artifact available.'}</div>
+          <div className="px-5 py-8 text-sm text-sand/80">{activeArtifact.reason ?? '표시할 산출물이 없습니다.'}</div>
         )}
       </div>
     </section>

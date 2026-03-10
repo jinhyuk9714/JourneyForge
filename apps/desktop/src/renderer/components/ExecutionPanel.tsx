@@ -13,7 +13,26 @@ const formatTarget = (target: ExecutionSnapshot['target']) => {
   if (target === 'k6') {
     return 'k6';
   }
-  return 'No run';
+  return '실행 없음';
+};
+
+const formatState = (state: ExecutionSnapshot['state']) => {
+  switch (state) {
+    case 'idle':
+      return '대기';
+    case 'preparing':
+      return '준비 중';
+    case 'running':
+      return '실행 중';
+    case 'succeeded':
+      return '성공';
+    case 'failed':
+      return '실패';
+    case 'cancelled':
+      return '취소됨';
+    default:
+      return state;
+  }
 };
 
 export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanelProps) => {
@@ -22,25 +41,29 @@ export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanel
   if (!belongsToSession) {
     return (
       <section data-testid="execution-panel" className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Execution</p>
-        <h3 className="font-display text-2xl text-ink">Run generated bundles</h3>
-        <p className="mt-3 text-sm text-ink/60">Select Playwright or k6 output above to run this session inside the app.</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">실행</p>
+        <h3 className="font-display text-2xl text-ink">생성된 번들 실행</h3>
+        <p className="mt-3 text-sm text-ink/60">
+          위에서 Playwright 또는 k6 산출물을 선택하면 앱 안에서 이 세션을 실행할 수 있습니다.
+        </p>
       </section>
     );
   }
 
-  const statusLabel = `${formatTarget(snapshot.target)} · ${snapshot.state}`;
+  const statusLabel = `${formatTarget(snapshot.target)} · ${formatState(snapshot.state)}`;
 
   return (
     <section data-testid="execution-panel" className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">Execution</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">실행</p>
           <h3 data-testid="execution-status" className="font-display text-2xl text-ink">
             {statusLabel}
           </h3>
           <p className="mt-1 text-sm text-ink/60">
-            {snapshot.bundlePath ? `Bundle: ${snapshot.bundlePath}` : 'Live stdout, stderr, and system messages stay in memory only.'}
+            {snapshot.bundlePath
+              ? `번들: ${snapshot.bundlePath}`
+              : 'stdout, stderr, system 메시지는 메모리에만 유지됩니다.'}
           </p>
         </div>
         {snapshot.runId && (snapshot.state === 'preparing' || snapshot.state === 'running') ? (
@@ -55,8 +78,8 @@ export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanel
       </div>
 
       <div className="mt-4 flex flex-wrap gap-4 text-sm text-ink/70">
-        <span>State: {snapshot.state}</span>
-        {typeof snapshot.exitCode === 'number' ? <span>Exit: {snapshot.exitCode}</span> : null}
+        <span>상태: {formatState(snapshot.state)}</span>
+        {typeof snapshot.exitCode === 'number' ? <span>종료 코드: {snapshot.exitCode}</span> : null}
         {snapshot.error ? <span className="text-ember">{snapshot.error}</span> : null}
       </div>
 
@@ -71,7 +94,7 @@ export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanel
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-sand/70">No logs yet.</p>
+          <p className="text-sm text-sand/70">아직 로그가 없습니다.</p>
         )}
       </div>
     </section>

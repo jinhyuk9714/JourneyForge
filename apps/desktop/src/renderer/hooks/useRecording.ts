@@ -29,7 +29,7 @@ export const useRecording = () => {
         if (!active) {
           return;
         }
-        setError(caught instanceof Error ? caught.message : 'Failed to refresh recording status.');
+        setError(caught instanceof Error ? caught.message : '녹화 상태를 새로고침하지 못했습니다.');
       }
     };
 

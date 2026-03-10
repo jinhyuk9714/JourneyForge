@@ -95,7 +95,7 @@ export const buildK6ExecutionPlan = (input: {
       cwd,
       env,
       phase: 'preparing',
-      failureMessage: 'Install k6 and make sure it is available on your PATH before running this journey.',
+      failureMessage: '이 여정을 실행하기 전에 k6를 설치하고 PATH에서 사용할 수 있게 설정하세요.',
     },
     {
       label: `k6 run ${input.sessionBundle.journey.slug}.js`,

@@ -9,8 +9,8 @@ test('launches the packaged app and persists settings under userData', async () 
   const scenario = await launchPackagedApp();
 
   try {
-    await scenario.page.getByRole('button', { name: 'Settings' }).click();
-    await expect(scenario.page.getByRole('heading', { name: 'Tune runtime inputs, noisy traffic filters, and execution defaults.' })).toBeVisible();
+    await scenario.page.getByRole('button', { name: '설정' }).click();
+    await expect(scenario.page.getByRole('heading', { name: '실행 입력값, 노이즈 필터, 기본값을 조정하세요.' })).toBeVisible();
     await expect
       .poll(async () => {
         try {
