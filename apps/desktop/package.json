@@ -12,6 +12,8 @@
     "test:e2e": "playwright test -c playwright.e2e.config.ts",
     "pretest:smoke-real": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && pnpm --filter @journeyforge/core exec playwright install chromium",
     "test:smoke-real": "playwright test -c playwright.real-smoke.config.ts",
+    "pretest:smoke-execution-real": "pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build && pnpm build && node scripts/ensure-electron.mjs && pnpm --filter @journeyforge/core exec playwright install chromium",
+    "test:smoke-execution-real": "playwright test -c playwright.real-execution.config.ts",
     "test": "vitest run --passWithNoTests",
     "check-types": "tsc --noEmit -p tsconfig.json"
   },

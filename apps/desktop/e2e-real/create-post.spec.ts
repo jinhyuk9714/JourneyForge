@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { launchRealDesktopScenario, waitForRealSmokeCompletion } from './helpers';
+import { launchRealDesktopScenario, setTargetUrl, waitForRealSmokeCompletion } from './helpers';
 
 test('desktop shell records and previews the real create-post flow', async () => {
   const runtime = await launchRealDesktopScenario('create-post');
@@ -8,7 +8,7 @@ test('desktop shell records and previews the real create-post flow', async () =>
   try {
     const { page, baseUrl, dataDir } = runtime;
 
-    await page.getByLabel('Target URL').fill(`${baseUrl}/login`);
+    await setTargetUrl(page, `${baseUrl}/login`);
     await page.getByRole('button', { name: '기록 시작' }).click();
     await expect(page.getByText('녹화 중')).toBeVisible();
 

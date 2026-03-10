@@ -26,6 +26,7 @@ pnpm demo-target
 pnpm smoke
 pnpm --filter @journeyforge/desktop test:e2e
 pnpm --filter @journeyforge/desktop test:smoke-real
+pnpm --filter @journeyforge/desktop test:smoke-execution-real
 pnpm test
 pnpm build
 ```
@@ -70,6 +71,12 @@ pnpm build
 - The suite drives recording through a test-only autopilot in headless Chromium and verifies `record -> normalize -> generate -> preview -> export`
 - Covered scenarios are `login-search-detail` and `create-post`
 
+## Real Local Execution Smoke
+
+- `pnpm --filter @journeyforge/desktop test:smoke-execution-real` launches the built Electron app against the real execution service
+- The suite records the `login -> search -> detail` flow, then runs the generated Playwright and k6 bundles from inside Electron
+- `k6` must already be installed and available on your local `PATH`
+
 ## Manual Validation Checklist
 
 1. Run `pnpm demo-target`
@@ -86,4 +93,5 @@ pnpm build
 
 ## Current Limits
 
-- Real local Playwright/k6 execution is still manually validated on a developer machine
+- OS keychain-backed credential flow is still manually validated on a developer machine
+- Packaged distribution, installer behavior, and code signing are still outside automated coverage

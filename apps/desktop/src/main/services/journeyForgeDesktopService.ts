@@ -15,6 +15,7 @@ import type {
 import type { RecorderServiceOptions } from '@journeyforge/core';
 
 import { createCredentialService } from './credentialService';
+import type { CredentialStore } from './credentialService';
 import { createExecutionService } from './executionService';
 
 export type DesktopRuntime = {
@@ -36,33 +37,39 @@ export type DesktopRuntime = {
   dispose(): Promise<void>;
 };
 
-type CreateJourneyForgeDesktopRuntimeOptions = {
+export type CreateJourneyForgeDesktopRuntimeOptions = {
   dataDir?: string;
   recorder?: Omit<RecorderServiceOptions, 'settings'>;
+  credentialStore?: CredentialStore;
+  createCoreApp?: typeof createJourneyForgeApp;
+  createExecutionServiceImpl?: typeof createExecutionService;
 };
 
 export const createJourneyForgeDesktopRuntime = ({
   dataDir = resolve(process.cwd(), 'data'),
   recorder,
+  credentialStore,
+  createCoreApp = createJourneyForgeApp,
+  createExecutionServiceImpl = createExecutionService,
 }: CreateJourneyForgeDesktopRuntimeOptions = {}): DesktopRuntime => {
-  const coreApp = createJourneyForgeApp({
+  const coreApp = createCoreApp({
     dataDir,
     recorder,
   });
-  const credentialService = createCredentialService();
-  const executionService = createExecutionService({
+  const resolvedCredentialStore = credentialStore ?? createCredentialService();
+  const executionService = createExecutionServiceImpl({
     dataDir,
     desktopApp: {
       exportBundle: (sessionId) => coreApp.exportBundle(sessionId),
       getSession: (sessionId) => coreApp.getSession(sessionId),
       getSettings: () => coreApp.getSettings(),
     },
-    credentialStore: credentialService,
+    credentialStore: resolvedCredentialStore,
   });
 
   const getSettingsPayload = async (): Promise<SettingsPayload> => ({
     settings: await coreApp.getSettings(),
-    credentialStatus: await credentialService.getStatus(),
+    credentialStatus: await resolvedCredentialStore.getStatus(),
   });
 
   return {
@@ -95,11 +102,11 @@ export const createJourneyForgeDesktopRuntime = ({
       return getSettingsPayload();
     },
     async setPlaywrightPassword(value: string) {
-      await credentialService.setPlaywrightPassword(value);
+      await resolvedCredentialStore.setPlaywrightPassword(value);
       return { configured: true as const };
     },
     async clearPlaywrightPassword() {
-      await credentialService.clearPlaywrightPassword();
+      await resolvedCredentialStore.clearPlaywrightPassword();
       return { configured: false as const };
     },
     startExecution(input: { sessionId: string; target: ExecutionTarget }) {

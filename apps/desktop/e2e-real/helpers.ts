@@ -78,3 +78,11 @@ export const launchRealDesktopScenario = async (scenario: RealDesktopScenario): 
     },
   };
 };
+
+export const setTargetUrl = async (page: Page, value: string) => {
+  const input = page.getByLabel('Target URL');
+  await input.click();
+  await input.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
+  await input.fill(value);
+  await expect(input).toHaveValue(value);
+};

@@ -3,7 +3,15 @@ import type { CredentialStatus } from '@journeyforge/shared';
 const SERVICE_NAME = 'JourneyForge';
 const PLAYWRIGHT_PASSWORD_ACCOUNT = 'playwright:test-password';
 
-export type CredentialService = ReturnType<typeof createCredentialService>;
+export type CredentialStore = {
+  getPlaywrightPassword(): Promise<string | null>;
+  hasPlaywrightPassword(): Promise<boolean>;
+  setPlaywrightPassword(value: string): Promise<void>;
+  clearPlaywrightPassword(): Promise<void>;
+  getStatus(): Promise<CredentialStatus>;
+};
+
+export type CredentialService = CredentialStore;
 
 const loadKeytar = async () => {
   try {
@@ -16,7 +24,7 @@ const loadKeytar = async () => {
   }
 };
 
-export const createCredentialService = () => ({
+export const createCredentialService = (): CredentialStore => ({
   async getPlaywrightPassword(): Promise<string | null> {
     const keytar = await loadKeytar();
     return keytar.getPassword(SERVICE_NAME, PLAYWRIGHT_PASSWORD_ACCOUNT);

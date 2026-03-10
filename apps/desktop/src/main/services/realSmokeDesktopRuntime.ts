@@ -1,6 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import type { ExecutionTarget } from '@journeyforge/shared';
+
 import type { DesktopRuntime } from './journeyForgeDesktopService';
 import { createJourneyForgeDesktopRuntime } from './journeyForgeDesktopService';
 import type { RealDesktopSmokeScenario } from './realSmokeScenario';
@@ -17,6 +19,7 @@ export type RealSmokeStatus = {
   baseUrl: string;
   updatedAt: number;
   error?: string;
+  target?: ExecutionTarget;
 };
 
 type CreateRealSmokeDesktopRuntimeOptions = {
@@ -24,7 +27,7 @@ type CreateRealSmokeDesktopRuntimeOptions = {
   scenario: RealDesktopSmokeScenario;
 };
 
-const writeRealSmokeStatus = async (dataDir: string, status: Omit<RealSmokeStatus, 'updatedAt'>) => {
+export const writeRealSmokeStatus = async (dataDir: string, status: Omit<RealSmokeStatus, 'updatedAt'>) => {
   await mkdir(dataDir, { recursive: true });
   await writeFile(
     join(dataDir, REAL_SMOKE_STATUS_FILE),

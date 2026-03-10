@@ -5,6 +5,13 @@ import type { DesktopE2EScenario } from './fakeDesktopRuntime';
 import { createJourneyForgeDesktopRuntime } from './journeyForgeDesktopService';
 import type { DesktopRuntime } from './journeyForgeDesktopService';
 import {
+  createRealExecutionSmokeDesktopRuntime,
+  DESKTOP_REAL_EXECUTION_DATA_DIR_ENV,
+  DESKTOP_REAL_EXECUTION_SMOKE_ENV,
+  DESKTOP_REAL_EXECUTION_TARGET_ENV,
+} from './realExecutionSmokeDesktopRuntime';
+import type { RealExecutionSmokeTarget } from './realExecutionSmokeDesktopRuntime';
+import {
   createRealSmokeDesktopRuntime,
   DESKTOP_REAL_SMOKE_DATA_DIR_ENV,
   DESKTOP_REAL_SMOKE_ENV,
@@ -21,6 +28,7 @@ type CreateDesktopRuntimeOptions = {
   createRealRuntime?: (input: { dataDir: string }) => DesktopRuntime;
   createFakeRuntime?: (input: { dataDir: string; scenario: DesktopE2EScenario }) => DesktopRuntime;
   createRealSmokeRuntime?: (input: { dataDir: string; scenario: RealDesktopSmokeScenario }) => DesktopRuntime;
+  createRealExecutionSmokeRuntime?: (input: { dataDir: string; target: RealExecutionSmokeTarget }) => DesktopRuntime;
 };
 
 const toScenario = (value: string | undefined): DesktopE2EScenario => {
@@ -39,18 +47,39 @@ const toRealSmokeScenario = (value: string | undefined): RealDesktopSmokeScenari
   return 'login-search-detail';
 };
 
+const toRealExecutionTarget = (value: string | undefined): RealExecutionSmokeTarget => {
+  if (value === 'k6') {
+    return value;
+  }
+
+  return 'playwright';
+};
+
 export const createDesktopRuntime = ({
   env = process.env,
   createRealRuntime = ({ dataDir }) => createJourneyForgeDesktopRuntime({ dataDir }),
   createFakeRuntime = ({ dataDir, scenario }) => createFakeDesktopRuntime({ dataDir, scenario }),
   createRealSmokeRuntime = ({ dataDir, scenario }) => createRealSmokeDesktopRuntime({ dataDir, scenario }),
+  createRealExecutionSmokeRuntime = ({ dataDir, target }) =>
+    createRealExecutionSmokeDesktopRuntime({ dataDir, target }),
 }: CreateDesktopRuntimeOptions = {}): DesktopRuntime => {
-  const dataDir = env[DESKTOP_E2E_DATA_DIR_ENV] ?? env[DESKTOP_REAL_SMOKE_DATA_DIR_ENV] ?? resolve(process.cwd(), 'data');
+  const dataDir =
+    env[DESKTOP_E2E_DATA_DIR_ENV] ??
+    env[DESKTOP_REAL_EXECUTION_DATA_DIR_ENV] ??
+    env[DESKTOP_REAL_SMOKE_DATA_DIR_ENV] ??
+    resolve(process.cwd(), 'data');
 
   if (env[DESKTOP_E2E_ENV] === '1') {
     return createFakeRuntime({
       dataDir,
       scenario: toScenario(env[DESKTOP_E2E_SCENARIO_ENV]),
+    });
+  }
+
+  if (env[DESKTOP_REAL_EXECUTION_SMOKE_ENV] === '1') {
+    return createRealExecutionSmokeRuntime({
+      dataDir,
+      target: toRealExecutionTarget(env[DESKTOP_REAL_EXECUTION_TARGET_ENV]),
     });
   }
 
