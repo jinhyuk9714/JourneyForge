@@ -1,6 +1,6 @@
 # JourneyForge 릴리스 런북
 
-JourneyForge의 공식 macOS 릴리스 경로는 `v*` 태그를 푸시해서 GitHub Actions `macOS Release` workflow를 실행하는 방식입니다. 현재 검증된 기준선은 `v0.1.2`입니다.
+JourneyForge의 공식 macOS 릴리스 경로는 `v*` 태그를 푸시해서 GitHub Actions `macOS Release` workflow를 실행하는 방식입니다. 현재 검증된 기준선은 `v0.1.3`입니다.
 
 ## 필수 준비물
 

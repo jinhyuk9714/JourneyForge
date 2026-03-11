@@ -124,7 +124,7 @@ pnpm --filter @journeyforge/desktop package:mac:dir:unsigned
 
 공식 릴리스 경로는 `v*` 태그를 push해서 GitHub Actions `macOS Release` workflow를 실행하는 방식입니다.
 
-- 현재 성공 기준선: `v0.1.2`
+- 현재 성공 기준선: `v0.1.3`
 - 산출물: signed/notarized `.dmg`, `.zip`
 - 릴리스 파일 위치: GitHub Release 또는 `apps/desktop/release`
 
