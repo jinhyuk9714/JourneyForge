@@ -21,10 +21,10 @@ describe('desktop package manifest', () => {
 
     expect(packageJson.main).toBe('out/main/index.js');
     expect(packageJson.description).toBe(
-      '브라우저 여정을 기록해 Playwright 테스트, API 흐름 문서, k6 초안을 생성하는 로컬 우선 데스크톱 앱',
+      '브라우저 흐름을 기록해 Playwright 테스트, API 문서, k6 초안을 만드는 로컬 우선 데스크톱 앱',
     );
     expect(rootPackageJson.description).toBe(
-      '브라우저 여정을 Playwright 테스트, API 흐름 문서, k6 초안으로 바꾸는 로컬 우선 워크스페이스',
+      '브라우저 사용 흐름을 테스트, 문서, 성능 검증 초안으로 바꾸는 로컬 우선 워크스페이스',
     );
     expect(packageJson.scripts?.predev).toBe(
       'pnpm --filter @journeyforge/shared build && pnpm --filter @journeyforge/core build',

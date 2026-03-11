@@ -1,162 +1,156 @@
 # JourneyForge
 
-JourneyForge는 실제 브라우저 여정을 개발 자산으로 바꾸는 로컬 우선 도구입니다.
+JourneyForge는 브라우저에서 직접 수행한 흐름을 기록해 테스트, 문서, 성능 검증 초안으로 바꿔 주는 macOS 데스크톱 앱입니다.
 
-한 번 기록하면 다음 산출물을 생성합니다.
+- Playwright E2E 테스트 초안 생성
+- API 흐름 문서 생성
+- k6 부하 테스트 초안 생성
+- 앱 안에서 Playwright와 k6 실행
 
-- Playwright E2E 테스트 초안
-- API 흐름 문서
-- k6 부하 테스트 초안
+## 이 앱이 하는 일
 
-## 워크스페이스 구성
+로그인, 검색, 상세 진입, 생성, 수정 같은 웹 흐름을 한 번 직접 수행하면 JourneyForge가 그 과정을 정리해 아래 결과물로 바꿉니다.
 
-- `apps/desktop`: Electron + React 기반 데스크톱 앱
-- `packages/shared`: 공용 도메인 타입과 유틸리티
-- `packages/core`: recorder, normalizer, generator, JSON 저장 오케스트레이션
+- 브라우저 행동을 재현하는 Playwright 테스트
+- 어떤 단계에서 어떤 API가 호출됐는지 보여 주는 흐름 문서
+- 실제 호출된 핵심 API를 바탕으로 만든 k6 스크립트 초안
 
-## 자주 쓰는 명령
+핵심은 간단합니다. 같은 흐름을 다시 손으로 정리하지 않아도 된다는 점입니다.
+
+## 이런 사람에게 맞습니다
+
+- 화면 동선을 테스트 코드로 빠르게 남기고 싶은 프론트엔드 개발자
+- 실제 사용자 흐름에서 어떤 API가 호출되는지 보고 싶은 백엔드 개발자
+- 기능 검증과 성능 검증의 출발점을 빨리 만들고 싶은 QA와 팀 리드
+
+## 빠르게 시작하기
+
+### 1. 설치
 
 ```bash
 pnpm install
 pnpm approve-builds
 pnpm --filter @journeyforge/desktop exec node node_modules/electron/install.js
 pnpm install:browsers
+```
+
+`pnpm approve-builds`에서는 `keytar`를 허용해야 합니다.
+
+### 2. 앱 실행
+
+```bash
+pnpm dev
+```
+
+### 3. 데모 타깃으로 바로 써보기
+
+별도 터미널에서:
+
+```bash
+pnpm demo-target
+```
+
+그다음 앱에서 아래 주소를 입력해 녹화를 시작하면 됩니다.
+
+```text
+http://127.0.0.1:4173/login
+```
+
+## 기본 사용 흐름
+
+1. `설정`에서 Playwright 이메일, 기본 URL, 비밀번호를 먼저 맞춥니다.
+2. 홈 화면에서 대상 URL을 입력하고 `기록 시작`을 누릅니다.
+3. 열린 Chromium 브라우저에서 실제로 사이트를 사용합니다.
+4. 앱으로 돌아와 `기록 종료`를 누릅니다.
+5. 생성된 `Playwright`, `Flow Markdown`, `k6` 결과를 확인합니다.
+6. 필요하면 내보내거나 앱 안에서 바로 실행합니다.
+
+## 생성 결과는 어떻게 쓰나
+
+### Playwright
+
+- 방금 수행한 흐름을 자동화 테스트로 다시 실행할 수 있습니다.
+- 정식 E2E 테스트에 편입하기 전에 초안으로 다듬는 용도로 좋습니다.
+
+### Flow Markdown
+
+- 어떤 행동 뒤에 어떤 API가 호출됐는지 한눈에 볼 수 있습니다.
+- 리뷰, 공유, 기능 이해용 문서로 바로 쓸 수 있습니다.
+
+### k6
+
+- 실제 사용자 흐름에 등장한 API를 기준으로 성능 테스트 초안을 만듭니다.
+- rate, threshold, payload만 다듬어 실제 부하 테스트로 확장할 수 있습니다.
+
+## 설정과 저장 방식
+
+- 설정은 기본적으로 `data/settings.json`에 저장됩니다.
+- Playwright 비밀번호는 파일이 아니라 운영체제 키체인에 저장됩니다.
+- 개발 실행 기준 세션과 결과물은 repo의 `data/` 아래에 저장됩니다.
+- packaged 앱은 repo 루트가 아니라 Electron `userData/data` 아래에 같은 구조로 저장합니다.
+
+## 자주 쓰는 명령
+
+### 개발
+
+```bash
 pnpm dev
 pnpm demo-target
 pnpm smoke
+pnpm build
+pnpm test
+pnpm check-types
+```
+
+### 데스크톱 검증
+
+```bash
 pnpm --filter @journeyforge/desktop test:e2e
 pnpm --filter @journeyforge/desktop test:smoke-real
 pnpm --filter @journeyforge/desktop test:smoke-execution-real
 pnpm --filter @journeyforge/desktop test:package-smoke
-pnpm --filter @journeyforge/desktop test:package-smoke:signed
-pnpm --filter @journeyforge/desktop package:mac
-pnpm --filter @journeyforge/desktop notarize:mac:verify
-pnpm test
-pnpm build
 ```
 
-## MVP 기준점
+### macOS 패키징
 
-- Chromium 녹화 세션은 한 번에 하나만 지원합니다
-- 데이터는 기본적으로 `data/` 아래에 JSON으로 저장합니다
-- 녹화 세션 1개는 정규화된 여정 1개를 만듭니다
-- 설정은 `data/settings.json`에 저장됩니다
-- 저장된 설정은 저장 완료 이후 시작하는 새 녹화부터 적용됩니다
-- 실행 가능한 번들이 준비되면 Playwright와 k6를 데스크톱 앱 안에서 바로 실행할 수 있습니다
-- 실행용 이메일과 base URL은 설정에 저장되고, Playwright 비밀번호는 운영체제 키체인에 저장됩니다
+```bash
+pnpm --filter @journeyforge/desktop package:mac
+pnpm --filter @journeyforge/desktop notarize:mac:verify
+pnpm --filter @journeyforge/desktop package:mac:unsigned
+pnpm --filter @journeyforge/desktop package:mac:dir:unsigned
+```
 
-## 데모 타깃
+## 릴리스
 
-- `apps/demo-target`은 real-browser smoke 검증에 쓰는 인-레포 대상 앱입니다
-- 수동 실행은 `pnpm demo-target`으로 시작합니다
-- 기본 happy path는 `login -> search -> detail`, `create post`, `edit post`입니다
+공식 릴리스 경로는 `v*` 태그를 push해서 GitHub Actions `macOS Release` workflow를 실행하는 방식입니다.
 
-## 네이티브 런타임 준비
+- 현재 성공 기준선: `v0.1.2`
+- 산출물: signed/notarized `.dmg`, `.zip`
+- 릴리스 파일 위치: GitHub Release 또는 `apps/desktop/release`
 
-- pnpm이 네이티브 빌드 스크립트를 막았다고 나오면 `pnpm approve-builds`를 실행하고 `keytar`를 승인하세요
-- fresh worktree에서 Electron 바이너리 다운로드가 빠졌다면 `pnpm --filter @journeyforge/desktop exec node node_modules/electron/install.js`로 복구할 수 있습니다
-- Playwright 실행 중 키체인 로드 오류가 나면 desktop 패키지의 네이티브 모듈을 다시 빌드한 뒤 재시도하세요
+로컬에서 직접 signed 릴리스를 검증해야 할 때는 아래 두 명령을 사용합니다.
 
-## 서명된 macOS 릴리스
+```bash
+pnpm --filter @journeyforge/desktop package:mac
+pnpm --filter @journeyforge/desktop notarize:mac:verify
+```
 
-- 공식 릴리스 경로는 `v*` 태그 push로 GitHub Actions `macOS Release` workflow를 실행하는 방식입니다
-- 현재 성공 기준선은 `v0.1.2` 릴리스입니다
-- `pnpm --filter @journeyforge/desktop package:mac`는 공식 signed release 경로이며 `apps/desktop/release` 아래에 서명된 `.dmg`와 `.zip`을 생성합니다
-- signed packaging 흐름은 `electron-builder`로 앱을 서명하고 notarization한 뒤, 생성된 DMG를 `notarytool`로 한 번 더 제출하고 staple까지 수행합니다
-- `pnpm --filter @journeyforge/desktop package:mac:unsigned`와 `pnpm --filter @journeyforge/desktop package:mac:dir:unsigned`는 개발자 전용 fallback으로 남겨 둡니다
-- `pnpm --filter @journeyforge/desktop notarize:mac:verify`는 signed artifact에 대해 `codesign`, `stapler`, `spctl`, packaged startup smoke를 순서대로 검증합니다
-- 릴리스 운영 절차 전체는 [docs/release-playbook.md](docs/release-playbook.md)에 정리돼 있습니다
-- signed release를 만들기 전 아래 환경변수를 준비하세요
-  - signing: `CSC_NAME` 또는 `CSC_LINK`
-  - App Store Connect API key 기반 notarization: `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`
-  - Apple ID 기반 notarization: `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`
-  - keychain profile 기반 notarization: `APPLE_KEYCHAIN_PROFILE`와 선택적 `APPLE_KEYCHAIN`
-- 패키징 전에 Developer ID 인증서를 로그인 키체인에 추가해야 합니다. `security find-identity -v -p codesigning`에서 `Developer ID Application` 항목이 보여야 합니다
-- `pnpm --filter @journeyforge/desktop test:package-smoke`는 빠른 로컬 검증용으로 unsigned unpacked `.app`를 사용합니다
-- packaged app은 repo 루트의 `data/`를 쓰지 않고 Electron `userData` 아래에 같은 `data/` 구조를 만듭니다
-- 첫 설정 저장이나 세션 생성 이후 `settings.json`, 세션 데이터, export 결과가 그 경로에 쌓입니다
-- Playwright, k6, 키체인 동작은 계속 로컬 머신의 toolchain과 macOS keychain에 의존합니다
+세부 릴리스 절차, GitHub Secrets, 실패 대응은 [docs/release-playbook.md](docs/release-playbook.md)에 정리되어 있습니다.
 
-## CI macOS 릴리스
+## 프로젝트 구조
 
-- `.github/workflows/macos-release.yml`이 공식 GitHub Actions 릴리스 경로입니다
-- workflow는 `v*` 태그 push와 `workflow_dispatch`를 지원합니다
-- 표준 절차는 `버전 올리기 -> main 푸시 -> vX.Y.Z 태그 발행 -> Actions 성공 확인 -> GitHub Release 산출물 확인 -> Gatekeeper 수동 확인`입니다
-- 세부 절차와 실패 대응은 [docs/release-playbook.md](docs/release-playbook.md)를 기준 문서로 사용하세요
-- 활성화 전에 아래 GitHub repository secrets를 준비하세요
-  - `BUILD_CERTIFICATE_BASE64`
-  - `P12_PASSWORD`
-  - `APPLE_API_KEY_BASE64`
-  - `APPLE_API_KEY_ID`
-  - `APPLE_API_ISSUER`
-- `CSC_NAME`은 repository variable 또는 secret으로 설정합니다
-- workflow는 패키징 전에 태그 버전과 `apps/desktop/package.json` 버전이 일치하는지 먼저 검증합니다
-- 태그 기반 릴리스는 signed/notarized `.dmg`, `.zip`, 그리고 가능한 경우 `.blockmap`까지 GitHub Release에 첨부합니다
-- 로컬 수동 fallback은 개발자 Mac에서 `pnpm --filter @journeyforge/desktop package:mac`와 `pnpm --filter @journeyforge/desktop notarize:mac:verify`를 직접 실행하는 경로로 유지합니다
+- `apps/desktop`: Electron + React 기반 데스크톱 앱
+- `apps/demo-target`: 데모 및 실제 smoke 검증용 대상 앱
+- `packages/core`: 녹화, 정규화, 생성, 저장 오케스트레이션
+- `packages/shared`: 공용 타입과 유틸리티
 
-## 실제 브라우저 검증
+## 현재 상태
 
-- `pnpm smoke`는 실제 Chromium으로 `record -> normalize -> generate -> export` 흐름을 검증합니다
-- Playwright 브라우저가 아직 설치되지 않았다면 `pnpm install:browsers`를 먼저 실행하세요
-- smoke target은 JourneyForge 자체를 검증하기 위한 최소 대상 앱입니다
-
-## 데스크톱 UI 자동화
-
-- `pnpm --filter @journeyforge/desktop test:e2e`는 fake runtime으로 빌드된 Electron 앱 셸을 end-to-end 검증합니다
-- 포함 시나리오는 `default`, `legacy`, `cancel-execution`입니다
-- 녹화 상태 전이, preview 렌더링, explainability 카드, artifact/bundle export 메시지, in-app execution 로그를 함께 확인합니다
-
-## 실제 데스크톱 smoke
-
-- `pnpm --filter @journeyforge/desktop test:smoke-real`는 실제 desktop runtime으로 빌드된 Electron 앱을 띄웁니다
-- test-only autopilot이 headless Chromium을 조작해서 `record -> normalize -> generate -> preview -> export`를 검증합니다
-- 포함 시나리오는 `login-search-detail`과 `create-post`입니다
-
-## 실제 로컬 실행 smoke
-
-- `pnpm --filter @journeyforge/desktop test:smoke-execution-real`는 실제 execution service를 붙인 Electron 앱을 띄웁니다
-- `login -> search -> detail`을 녹화한 뒤 Electron 안에서 생성된 Playwright/k6 번들을 실제 로컬 toolchain으로 실행합니다
-- `k6`는 미리 설치되어 있어야 하며, 로컬 `PATH`에서 찾을 수 있어야 합니다
-
-## Packaged App Smoke
-
-- `pnpm --filter @journeyforge/desktop test:package-smoke`는 빌드 산출물이 아니라 release `.app` executable 자체를 실행합니다
-- packaged renderer/main/preload bootstrap과 Electron `userData/data` 아래의 persistence 초기화를 확인합니다
-
-## 수동 검증 체크리스트
-
-### 키체인 비밀번호 루프
-
-dev runtime 키체인 루프는 2026년 3월 11일에 수동 검증을 완료했습니다.
-
-1. `pnpm dev` 실행
-2. `설정` 화면 열기
-3. Playwright 비밀번호를 입력하고 `비밀번호 저장/교체` 클릭
-4. 상태가 `Playwright 비밀번호가 설정되어 있습니다`로 바뀌는지 확인
-5. 다른 비밀번호를 입력하고 다시 `비밀번호 저장/교체` 클릭
-6. 앱을 종료했다가 다시 열고, macOS keychain 상태와 `configured` 상태가 계속 일치하는지 확인
-7. `비밀번호 삭제` 클릭
-8. 상태가 `Playwright 비밀번호가 설정되지 않았습니다`로 바뀌는지 확인
-9. 앱을 다시 종료/재실행해서 해제 상태가 유지되는지 확인
-
-### Packaged App 키체인 루프
-
-packaged app 키체인 루프는 2026년 3월 11일에 수동 검증을 완료했습니다.
-
-1. 빠른 로컬 검증은 `pnpm --filter @journeyforge/desktop package:mac:unsigned`, signed release 경로는 `pnpm --filter @journeyforge/desktop package:mac` 실행
-2. packaged `.app` 실행
-3. `설정` 화면에서 저장, 교체, 삭제, 재실행 루프를 dev 앱과 동일하게 반복
-4. packaged 앱 재시작 이후에도 credential 상태가 macOS keychain과 계속 일치하는지 확인
-
-### Signed Release 검증
-
-1. signing / notarization 환경변수 준비
-2. `pnpm --filter @journeyforge/desktop package:mac` 실행
-3. `apps/desktop/release` 아래에 `.dmg`와 `.zip`이 생성되는지 확인
-4. `pnpm --filter @journeyforge/desktop notarize:mac:verify` 실행
-5. signed/notarized `.app`과 stapled `.dmg`가 `codesign`, `stapler`, `spctl`을 통과하는지 확인
+- 데스크톱 UI와 실행 흐름이 자동 검증되어 있습니다.
+- signed/notarized macOS `.app`과 `.dmg`를 만들 수 있습니다.
+- GitHub Actions로 macOS 릴리스를 자동 발행할 수 있습니다.
 
 ## 현재 제한 사항
 
-- GitHub Release 자동화 이후에도 릴리스 노트 정리와 최종 배포 공지는 수동으로 관리합니다
-- Gatekeeper 다운로드/실행 경험과 설치 안내 문구 다듬기 같은 installer polish는 별도 운영 작업으로 남아 있습니다
+- 릴리스 노트 정리와 최종 배포 공지는 여전히 사람이 직접 관리합니다.
+- Gatekeeper 설치 경험과 안내 문구 같은 installer polish는 운영 작업으로 남아 있습니다.
