@@ -101,6 +101,9 @@ jobs:
             echo "APPLE_API_ISSUER=$APPLE_API_ISSUER"
           } >> "$GITHUB_ENV"
 
+      - name: Install Playwright Chromium for repository verification
+        run: pnpm install:browsers
+
       - name: Run repository verification
         run: |
           set -euo pipefail
