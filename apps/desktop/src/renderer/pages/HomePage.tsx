@@ -53,7 +53,7 @@ export const HomePage = ({
       onStop={onStop}
     />
 
-    <div className="grid gap-6 xl:grid-cols-[340px_1fr]">
+    <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
       <SessionList sessions={sessions} selectedSessionId={selectedSessionId} onSelect={onSelectSession} />
       <SessionDetailPage
         bundle={selectedBundle}

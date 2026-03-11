@@ -89,7 +89,7 @@ export const SettingsPage = () => {
     }
     setCredentialFeedback({
       tone: 'saving',
-      message: 'Playwright 비밀번호를 운영체제 키체인에 저장하는 중입니다...',
+      message: '비밀번호를 키체인에 저장하는 중입니다.',
     });
     void window.journeyforge.credentials
       .setPlaywrightPassword({ value: passwordValue })
@@ -98,7 +98,7 @@ export const SettingsPage = () => {
         setPasswordValue('');
         setCredentialFeedback({
           tone: 'success',
-          message: 'Playwright 비밀번호를 운영체제 키체인에 저장했습니다.',
+          message: '비밀번호를 키체인에 저장했습니다.',
         });
       })
       .catch((cause) => {
@@ -112,7 +112,7 @@ export const SettingsPage = () => {
   const clearPassword = () => {
     setCredentialFeedback({
       tone: 'saving',
-      message: 'Playwright 비밀번호를 운영체제 키체인에서 삭제하는 중입니다...',
+      message: '비밀번호를 키체인에서 삭제하는 중입니다.',
     });
     void window.journeyforge.credentials
       .clearPlaywrightPassword()
@@ -121,7 +121,7 @@ export const SettingsPage = () => {
         setPasswordValue('');
         setCredentialFeedback({
           tone: 'success',
-          message: 'Playwright 비밀번호를 운영체제 키체인에서 삭제했습니다.',
+          message: '비밀번호를 키체인에서 삭제했습니다.',
         });
       })
       .catch((cause) => {
@@ -134,35 +134,33 @@ export const SettingsPage = () => {
 
   return (
     <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
-      <div className="max-w-3xl">
+      <div className="max-w-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">설정</p>
-        <h2 className="font-display text-3xl text-ink">실행 입력값, 노이즈 필터, 기본값을 조정하세요.</h2>
+        <h2 className="font-display text-3xl text-ink">실행 설정과 필터를 관리하세요.</h2>
         <p className="mt-2 text-sm text-ink/65">
-          <code>data/settings.json</code>에 저장됩니다. 저장이 끝난 뒤 시작하는 세션부터 변경 사항이 적용됩니다.
+          <code>data/settings.json</code>에 저장되며, 새로 시작하는 세션부터 반영됩니다.
         </p>
         <p className="mt-2 text-xs text-ink/55">
           {settingsStatus === 'loading'
-            ? '현재 설정을 불러오는 중입니다...'
+            ? '설정을 불러오는 중입니다.'
             : settingsStatus === 'saving'
-              ? '다음 녹화에 적용할 설정을 저장하는 중입니다...'
+              ? '설정을 저장하는 중입니다.'
               : settingsStatus === 'error'
                 ? settingsError ?? '설정을 업데이트하지 못했습니다.'
-                : '현재 설정이 다음 녹화부터 적용됩니다.'}
+                : '새 세션부터 이 설정이 적용됩니다.'}
         </p>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
           <div className="rounded-3xl border border-ink/10 bg-sand/90 p-5">
             <label htmlFor="analytics-patterns" className="font-display text-xl text-ink">
-              분석/추적 필터
+              추적 필터
             </label>
-            <p className="mt-2 text-sm text-ink/65">
-              한 줄에 하나씩 입력하세요. 일치하는 요청은 여정 정규화에서 제외됩니다.
-            </p>
+            <p className="mt-2 text-sm text-ink/65">한 줄에 하나씩 입력하면 해당 요청을 분석에서 제외합니다.</p>
             <textarea
               id="analytics-patterns"
-              aria-label="분석/추적 필터"
+              aria-label="추적 필터"
               className="mt-4 min-h-40 w-full rounded-3xl border border-ink/10 bg-white px-4 py-3 font-mono text-sm text-ink"
               value={settings.analyticsPatterns.join('\n')}
               onChange={(event) =>
@@ -176,9 +174,7 @@ export const SettingsPage = () => {
 
           <div className="rounded-3xl border border-ink/10 bg-sand/90 p-5">
             <h3 className="font-display text-xl text-ink">실행 기본값</h3>
-            <p className="mt-2 text-sm text-ink/65">
-              앱 안에서 생성된 Playwright와 k6 번들을 실행할 때 사용할 기본값입니다.
-            </p>
+            <p className="mt-2 text-sm text-ink/65">앱 안에서 Playwright와 k6를 실행할 때 기본으로 씁니다.</p>
             <div className="mt-4 grid gap-4">
               <label htmlFor="playwright-test-email" className="flex flex-col gap-2 text-sm text-ink">
                 <span>Playwright 테스트 이메일</span>
@@ -242,8 +238,8 @@ export const SettingsPage = () => {
         </div>
 
         <div className="space-y-4 rounded-3xl border border-ink/10 bg-ink p-5 text-sand">
-          <label htmlFor="mask-email-inputs" className="flex items-center justify-between gap-4">
-            <span className="text-sm">이메일 입력값 마스킹</span>
+          <label htmlFor="mask-email-inputs" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-sm">이메일 마스킹</span>
             <input
               id="mask-email-inputs"
               type="checkbox"
@@ -257,10 +253,10 @@ export const SettingsPage = () => {
             />
           </label>
           <label htmlFor="k6-duration-threshold" className="flex flex-col gap-2 text-sm">
-            <span>k6 p95 임계값 (ms)</span>
+            <span>k6 응답 p95 (ms)</span>
             <input
               id="k6-duration-threshold"
-              aria-label="k6 p95 임계값 (ms)"
+              aria-label="k6 응답 p95 (ms)"
               className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sand"
               type="number"
               value={settings.k6Thresholds.httpReqDurationP95}
@@ -276,10 +272,10 @@ export const SettingsPage = () => {
             />
           </label>
           <label htmlFor="k6-failed-threshold" className="flex flex-col gap-2 text-sm">
-            <span>k6 오류율 임계값</span>
+            <span>k6 오류율</span>
             <input
               id="k6-failed-threshold"
-              aria-label="k6 오류율 임계값"
+              aria-label="k6 오류율"
               className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sand"
               type="number"
               min="0"
@@ -299,11 +295,11 @@ export const SettingsPage = () => {
           </label>
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sand/60">키체인</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sand/60">비밀번호</p>
             <p className="mt-3 text-sm">
               {credentialStatus.hasPlaywrightPassword
-                ? 'Playwright 비밀번호가 설정되어 있습니다'
-                : 'Playwright 비밀번호가 설정되지 않았습니다'}
+                ? 'Playwright 비밀번호가 저장되어 있습니다'
+                : 'Playwright 비밀번호가 아직 없습니다'}
             </p>
             {credentialFeedback.message ? (
               <p
@@ -329,13 +325,13 @@ export const SettingsPage = () => {
                 onChange={(event) => setPasswordValue(event.target.value)}
               />
             </label>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"
                 className="rounded-2xl bg-gold px-4 py-2 text-sm font-semibold text-ink"
                 onClick={persistPassword}
               >
-                비밀번호 저장/교체
+                비밀번호 저장
               </button>
               <button
                 type="button"

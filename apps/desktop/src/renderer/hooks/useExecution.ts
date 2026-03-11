@@ -8,7 +8,7 @@ const defaultSnapshot: ExecutionSnapshot = {
   updatedAt: 0,
 };
 
-const toErrorMessage = (error: unknown) => (error instanceof Error ? error.message : '실행에 실패했습니다.');
+const toErrorMessage = (error: unknown) => (error instanceof Error ? error.message : '실행 중 오류가 발생했습니다.');
 
 export const useExecution = () => {
   const [snapshot, setSnapshot] = useState<ExecutionSnapshot>(defaultSnapshot);

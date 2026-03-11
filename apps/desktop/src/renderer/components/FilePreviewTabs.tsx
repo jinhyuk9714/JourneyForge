@@ -22,19 +22,19 @@ export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle, onRun }: 
   if (!activeArtifact) {
     return (
       <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
-        <p className="text-sm text-ink/60">이 세션에는 생성된 산출물이 없습니다.</p>
+        <p className="text-sm text-ink/60">생성된 결과가 없습니다.</p>
       </section>
     );
   }
 
   return (
     <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">생성 결과</p>
-          <h3 className="font-display text-2xl text-ink">미리보기 및 내보내기</h3>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">산출물</p>
+          <h3 className="font-display text-2xl text-ink">결과 미리보기</h3>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           {runnableTarget ? (
             <button
               type="button"
@@ -49,14 +49,14 @@ export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle, onRun }: 
             className="rounded-2xl border border-ink/15 bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-sand"
             onClick={onExportBundle}
           >
-            실행 번들 내보내기
+            번들 내보내기
           </button>
           <button
             type="button"
             className="rounded-2xl bg-gold px-4 py-2 text-sm font-semibold text-ink transition hover:bg-gold/85"
             onClick={() => onExport([activeKind])}
           >
-            현재 탭 내보내기
+            이 탭 내보내기
           </button>
         </div>
       </div>
@@ -84,12 +84,12 @@ export const FilePreviewTabs = ({ artifacts, onExport, onExportBundle, onRun }: 
               <span>{activeArtifact.fileName}</span>
               <span>{activeArtifact.relativePath}</span>
             </div>
-            <pre className="max-h-[460px] overflow-auto p-5 font-mono text-xs leading-6 text-sand/90">
+            <pre className="max-h-[360px] overflow-auto p-5 font-mono text-xs leading-6 text-sand/90 sm:max-h-[420px] xl:max-h-[460px]">
               <code>{activeArtifact.content}</code>
             </pre>
           </>
         ) : (
-          <div className="px-5 py-8 text-sm text-sand/80">{activeArtifact.reason ?? '표시할 산출물이 없습니다.'}</div>
+          <div className="px-5 py-8 text-sm text-sand/80">{activeArtifact.reason ?? '표시할 결과가 없습니다.'}</div>
         )}
       </div>
     </section>

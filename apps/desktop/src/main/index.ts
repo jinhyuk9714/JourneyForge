@@ -18,10 +18,10 @@ let desktopApp: DesktopRuntime | null = null;
 
 const createWindow = async () => {
   const mainWindow = new BrowserWindow({
-    width: 1480,
-    height: 960,
-    minWidth: 1180,
-    minHeight: 780,
+    width: 1320,
+    height: 860,
+    minWidth: 960,
+    minHeight: 680,
     title: 'JourneyForge',
     backgroundColor: '#f8f3e8',
     webPreferences: {

@@ -57,10 +57,10 @@ describe('FilePreviewTabs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'k6 실행' }));
     expect(onRun).toHaveBeenCalledWith('k6');
 
-    fireEvent.click(screen.getByRole('button', { name: '현재 탭 내보내기' }));
+    fireEvent.click(screen.getByRole('button', { name: '이 탭 내보내기' }));
     expect(onExport).toHaveBeenCalledWith(['k6']);
 
-    fireEvent.click(screen.getByRole('button', { name: '실행 번들 내보내기' }));
+    fireEvent.click(screen.getByRole('button', { name: '번들 내보내기' }));
     expect(onExportBundle).toHaveBeenCalledTimes(1);
   });
 });

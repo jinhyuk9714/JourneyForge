@@ -46,7 +46,7 @@ export const buildPlaywrightExecutionPlan = (input: {
       cwd,
       env,
       phase: 'preparing',
-      failureMessage: 'Failed to install Playwright bundle dependencies.',
+      failureMessage: 'Playwright 번들 의존성을 설치하지 못했습니다.',
     });
   }
 
@@ -58,7 +58,7 @@ export const buildPlaywrightExecutionPlan = (input: {
       cwd,
       env,
       phase: 'preparing',
-      failureMessage: 'Failed to install the Playwright Chromium runtime.',
+      failureMessage: 'Playwright Chromium 런타임을 설치하지 못했습니다.',
       onSuccess: async () => {
         await input.writeBrowserInstallMarker(input.browserInstallMarkerPath);
       },
@@ -72,7 +72,7 @@ export const buildPlaywrightExecutionPlan = (input: {
     cwd,
     env,
     phase: 'running',
-    failureMessage: 'Playwright execution failed.',
+    failureMessage: 'Playwright 실행에 실패했습니다.',
   });
 
   return commands;
@@ -104,7 +104,7 @@ export const buildK6ExecutionPlan = (input: {
       cwd,
       env,
       phase: 'running',
-      failureMessage: 'k6 execution failed.',
+      failureMessage: 'k6 실행에 실패했습니다.',
     },
   ];
 };

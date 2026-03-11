@@ -29,7 +29,7 @@ export const useRecording = () => {
         if (!active) {
           return;
         }
-        setError(caught instanceof Error ? caught.message : '녹화 상태를 새로고침하지 못했습니다.');
+        setError(caught instanceof Error ? caught.message : '녹화 상태를 가져오지 못했습니다.');
       }
     };
 

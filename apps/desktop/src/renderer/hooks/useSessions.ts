@@ -36,12 +36,12 @@ export const useSessions = () => {
     },
     async exportArtifacts(sessionId: string, artifactKinds: ArtifactKind[]) {
       const { exportedPaths } = await window.journeyforge.exports.write({ sessionId, artifactKinds });
-      setExportMessage(exportedPaths.length > 0 ? `${exportedPaths.length}개 파일을 내보냈습니다.` : '내보낸 파일이 없습니다.');
+      setExportMessage(exportedPaths.length > 0 ? `${exportedPaths.length}개 파일을 저장했습니다.` : '저장할 파일이 없습니다.');
       return exportedPaths;
     },
     async exportBundle(sessionId: string) {
       const { bundlePath } = await window.journeyforge.exports.write({ sessionId, mode: 'bundle' });
-      setExportMessage(bundlePath ? `번들을 ${bundlePath}에 내보냈습니다.` : '번들 내보내기에 실패했습니다.');
+      setExportMessage(bundlePath ? `번들을 ${bundlePath}에 저장했습니다.` : '번들을 저장하지 못했습니다.');
       return bundlePath;
     },
     dismissExportMessage() {

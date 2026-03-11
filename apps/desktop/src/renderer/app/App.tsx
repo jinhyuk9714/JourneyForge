@@ -37,14 +37,17 @@ export const App = () => {
   const errorMessage = error ?? executionError;
 
   return (
-    <div className="min-h-screen bg-app px-6 py-6 font-body text-ink">
-      <div className="mx-auto max-w-[1440px]">
-        <header className="mb-6 flex flex-wrap items-start justify-between gap-4 rounded-[32px] bg-white/70 px-6 py-5 shadow-panel backdrop-blur">
+    <div className="min-h-screen bg-app px-4 py-4 font-body text-ink sm:px-6 sm:py-6">
+      <div className="mx-auto max-w-[1320px]">
+        <header className="mb-6 flex flex-col gap-4 rounded-[32px] bg-white/70 px-5 py-5 shadow-panel backdrop-blur lg:flex-row lg:items-start lg:justify-between lg:px-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ink/45">JourneyForge MVP</p>
-            <h1 className="font-display text-4xl text-ink">한 번 기록하고, 개발 자산을 바로 생성하세요.</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ink/45">JourneyForge</p>
+            <h1 className="font-display text-3xl text-ink sm:text-4xl">한 번 기록하고 바로 활용하세요.</h1>
+            <p className="mt-2 max-w-2xl text-sm text-ink/65">
+              브라우저 흐름을 기록해 Playwright, API 흐름 문서, k6 초안으로 바로 정리합니다.
+            </p>
           </div>
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-2 self-start">
             <button
               type="button"
               className={`rounded-full px-4 py-2 text-sm font-semibold ${view === 'home' ? 'bg-ink text-sand' : 'bg-sand text-ink'}`}

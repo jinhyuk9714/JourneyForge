@@ -89,23 +89,23 @@ describe('SettingsPage', () => {
 
     render(<SettingsPage />);
 
-    expect(await screen.findByLabelText('분석/추적 필터')).toHaveValue('mixpanel\ninternal-metrics');
+    expect(await screen.findByLabelText('추적 필터')).toHaveValue('mixpanel\ninternal-metrics');
     expect(screen.getByRole('checkbox')).not.toBeChecked();
     expect(screen.getByDisplayValue('900')).toBeInTheDocument();
     expect(screen.getByDisplayValue('0.05')).toBeInTheDocument();
     expect(screen.getByDisplayValue('qa@example.com')).toBeInTheDocument();
     expect(screen.getByDisplayValue('http://127.0.0.1:3000')).toBeInTheDocument();
     expect(screen.getByDisplayValue('http://127.0.0.1:4000')).toBeInTheDocument();
-    expect(screen.getByText('Playwright 비밀번호가 설정되어 있습니다')).toBeInTheDocument();
+    expect(screen.getByText('Playwright 비밀번호가 저장되어 있습니다')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('분석/추적 필터'), {
+    fireEvent.change(screen.getByLabelText('추적 필터'), {
       target: { value: 'segment\ninternal-metrics' },
     });
     fireEvent.click(screen.getByRole('checkbox'));
-    fireEvent.change(screen.getByLabelText('k6 p95 임계값 (ms)'), {
+    fireEvent.change(screen.getByLabelText('k6 응답 p95 (ms)'), {
       target: { value: '650' },
     });
-    fireEvent.change(screen.getByLabelText('k6 오류율 임계값'), {
+    fireEvent.change(screen.getByLabelText('k6 오류율'), {
       target: { value: '0.02' },
     });
     fireEvent.change(screen.getByLabelText('Playwright 테스트 이메일'), {
@@ -120,7 +120,7 @@ describe('SettingsPage', () => {
     fireEvent.change(screen.getByLabelText('Playwright 비밀번호'), {
       target: { value: 'next-secret' },
     });
-    fireEvent.click(screen.getByRole('button', { name: '비밀번호 저장/교체' }));
+    fireEvent.click(screen.getByRole('button', { name: '비밀번호 저장' }));
     fireEvent.click(screen.getByRole('button', { name: '비밀번호 삭제' }));
 
     await waitFor(() => {
@@ -150,15 +150,15 @@ describe('SettingsPage', () => {
 
     render(<SettingsPage />);
 
-    await screen.findByLabelText('분석/추적 필터');
-    fireEvent.change(screen.getByLabelText('분석/추적 필터'), {
+    await screen.findByLabelText('추적 필터');
+    fireEvent.change(screen.getByLabelText('추적 필터'), {
       target: { value: 'segment' },
     });
 
     await waitFor(() => {
       expect(screen.getByText('Settings write failed.')).toBeInTheDocument();
     });
-    expect(screen.getByText('Playwright 비밀번호가 설정되지 않았습니다')).toBeInTheDocument();
+    expect(screen.getByText('Playwright 비밀번호가 아직 없습니다')).toBeInTheDocument();
   });
 
   it('keeps the credential status unchanged when saving the Playwright password fails', async () => {
@@ -172,12 +172,12 @@ describe('SettingsPage', () => {
     fireEvent.change(screen.getByLabelText('Playwright 비밀번호'), {
       target: { value: 'next-secret' },
     });
-    fireEvent.click(screen.getByRole('button', { name: '비밀번호 저장/교체' }));
+    fireEvent.click(screen.getByRole('button', { name: '비밀번호 저장' }));
 
     await waitFor(() => {
       expect(screen.getByText('The keychain is locked.')).toBeInTheDocument();
     });
-    expect(screen.getByText('Playwright 비밀번호가 설정되지 않았습니다')).toBeInTheDocument();
+    expect(screen.getByText('Playwright 비밀번호가 아직 없습니다')).toBeInTheDocument();
   });
 
   it('keeps the credential status unchanged when clearing the Playwright password fails', async () => {
@@ -202,12 +202,12 @@ describe('SettingsPage', () => {
 
     render(<SettingsPage />);
 
-    await screen.findByText('Playwright 비밀번호가 설정되어 있습니다');
+    await screen.findByText('Playwright 비밀번호가 저장되어 있습니다');
     fireEvent.click(screen.getByRole('button', { name: '비밀번호 삭제' }));
 
     await waitFor(() => {
       expect(screen.getByText('The JourneyForge keychain item could not be removed.')).toBeInTheDocument();
     });
-    expect(screen.getByText('Playwright 비밀번호가 설정되어 있습니다')).toBeInTheDocument();
+    expect(screen.getByText('Playwright 비밀번호가 저장되어 있습니다')).toBeInTheDocument();
   });
 });

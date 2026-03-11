@@ -51,7 +51,7 @@ export const launchRealExecutionScenario = async (target: RealExecutionSmokeTarg
   });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByRole('heading', { name: /한 번 기록하고, 개발 자산을 바로 생성하세요\./i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /한 번 기록하고 바로 활용하세요\./i })).toBeVisible();
 
   return {
     app,
@@ -76,5 +76,5 @@ export const completeRecordedJourney = async (page: Page, baseUrl: string, dataD
   await expect(page.getByText('녹화 중')).toBeVisible();
   await waitForRealSmokeCompletion(dataDir);
   await page.getByRole('button', { name: '기록 종료' }).click();
-  await expect(page.getByText('기록된 여정')).toBeVisible();
+  await expect(page.getByText('여정')).toBeVisible();
 };

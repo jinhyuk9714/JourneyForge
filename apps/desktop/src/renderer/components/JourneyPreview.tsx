@@ -15,7 +15,7 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
   if (!bundle) {
     return (
       <section className="rounded-[28px] border border-dashed border-ink/20 bg-white/65 p-8 text-sm text-ink/60 shadow-panel">
-        세션을 선택하면 정규화된 단계, 핵심 API, 생성 산출물을 확인할 수 있습니다.
+        세션을 선택하면 단계와 핵심 API, 생성 결과를 볼 수 있습니다.
       </section>
     );
   }
@@ -24,9 +24,9 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
 
   return (
     <section className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">기록된 여정</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">여정</p>
           <h3 className="font-display text-3xl text-ink">{bundle.journey.title}</h3>
           <p className="mt-1 text-sm text-ink/65">
             {bundle.journey.steps.length}단계 · {bundle.journey.coreApis.length}개 핵심 API · 기준 URL{' '}
@@ -38,14 +38,14 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-[1.4fr_1fr]">
+      <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(280px,1fr)]">
         <div className="space-y-4">
           {bundle.journey.steps.map((step, index) => (
             <article
               key={step.id}
               data-testid={`journey-step-${toTestSlug(step.title)}`}
-              className="rounded-3xl border border-ink/10 bg-sand/80 p-4"
-            >
+            className="rounded-3xl border border-ink/10 bg-sand/80 p-4 sm:p-5"
+          >
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-ink/45">단계 {index + 1}</p>
@@ -61,7 +61,7 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
                   data-testid={`journey-step-evidence-${step.id}`}
                   className="mt-4 rounded-3xl border border-white/70 bg-white/65 p-4"
                 >
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">이 단계로 분류한 이유</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">분류 근거</p>
                   <div className="mt-3 grid gap-2">
                     {(step.explanation ?? []).map((reason) => (
                       <div
@@ -90,7 +90,7 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
                   data-testid={`journey-api-evidence-${step.id}`}
                   className="mt-4 rounded-3xl border border-white/70 bg-white/70 p-4"
                 >
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">API 근거</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">API 근거</p>
                   <div className="mt-3 space-y-3">
                     {step.apis.map((api) =>
                       (api.explanation ?? []).length > 0 ? (
@@ -120,7 +120,7 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
 
         <div className="space-y-4">
           <div className="rounded-3xl border border-ink/10 bg-ink px-5 py-5 text-sand">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sand/60">원본 세션</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sand/60">세션</p>
             <div className="mt-4 space-y-3 text-sm text-sand/85">
               <div className="flex items-center justify-between gap-3">
                 <span>기록 이벤트</span>
@@ -140,7 +140,7 @@ export const JourneyPreview = ({ bundle }: JourneyPreviewProps) => {
           {k6CandidateReasons.length > 0 ? (
             <div data-testid="journey-k6-evidence" className="rounded-3xl border border-ink/10 bg-mint/20 px-5 py-5 text-ink">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-ink/45">
-                부하 테스트 후보를 고른 이유
+                부하 테스트 선정 이유
               </p>
               <div className="mt-4 space-y-3">
                 {k6CandidateReasons.map((candidate) => (

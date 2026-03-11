@@ -28,7 +28,7 @@ export const launchDesktopScenario = async (scenario: DesktopScenario): Promise<
   });
   const page = await app.firstWindow();
   await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByRole('heading', { name: /한 번 기록하고, 개발 자산을 바로 생성하세요\./i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /한 번 기록하고 바로 활용하세요\./i })).toBeVisible();
 
   return {
     app,

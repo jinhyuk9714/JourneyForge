@@ -88,13 +88,13 @@ describe('JourneyPreview', () => {
   it('renders evidence cards for step, api, and k6 candidate explanations', () => {
     render(<JourneyPreview bundle={bundle} />);
 
-    expect(screen.getByText('이 단계로 분류한 이유')).toBeInTheDocument();
+    expect(screen.getByText('분류 근거')).toBeInTheDocument();
     expect(
       screen.getByText('Grouped 2 input events with the triggering click before the next step started.'),
     ).toBeInTheDocument();
     expect(screen.getByText('API 근거')).toBeInTheDocument();
     expect(screen.getByText('Captured as fetch.')).toBeInTheDocument();
-    expect(screen.getByText('부하 테스트 후보를 고른 이유')).toBeInTheDocument();
+    expect(screen.getByText('부하 테스트 선정 이유')).toBeInTheDocument();
     expect(
       screen.getByText('Selected because it is a write API and write journeys take priority for k6 output.'),
     ).toBeInTheDocument();
@@ -125,8 +125,8 @@ describe('JourneyPreview', () => {
     render(<JourneyPreview bundle={legacyBundle} />);
 
     expect(screen.getByText('Create post')).toBeInTheDocument();
-    expect(screen.queryByText('이 단계로 분류한 이유')).not.toBeInTheDocument();
+    expect(screen.queryByText('분류 근거')).not.toBeInTheDocument();
     expect(screen.queryByText('API 근거')).not.toBeInTheDocument();
-    expect(screen.queryByText('부하 테스트 후보를 고른 이유')).not.toBeInTheDocument();
+    expect(screen.queryByText('부하 테스트 선정 이유')).not.toBeInTheDocument();
   });
 });

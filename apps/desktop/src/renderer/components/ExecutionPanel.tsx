@@ -42,10 +42,8 @@ export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanel
     return (
       <section data-testid="execution-panel" className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">실행</p>
-        <h3 className="font-display text-2xl text-ink">생성된 번들 실행</h3>
-        <p className="mt-3 text-sm text-ink/60">
-          위에서 Playwright 또는 k6 산출물을 선택하면 앱 안에서 이 세션을 실행할 수 있습니다.
-        </p>
+        <h3 className="font-display text-2xl text-ink">실행 준비</h3>
+        <p className="mt-3 text-sm text-ink/60">Playwright나 k6 결과를 선택하면 여기서 바로 실행할 수 있습니다.</p>
       </section>
     );
   }
@@ -54,16 +52,14 @@ export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanel
 
   return (
     <section data-testid="execution-panel" className="rounded-[28px] border border-ink/10 bg-white/85 p-6 shadow-panel">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">실행</p>
           <h3 data-testid="execution-status" className="font-display text-2xl text-ink">
             {statusLabel}
           </h3>
           <p className="mt-1 text-sm text-ink/60">
-            {snapshot.bundlePath
-              ? `번들: ${snapshot.bundlePath}`
-              : 'stdout, stderr, system 메시지는 메모리에만 유지됩니다.'}
+            {snapshot.bundlePath ? `번들 위치: ${snapshot.bundlePath}` : '로그는 앱이 켜진 동안만 유지됩니다.'}
           </p>
         </div>
         {snapshot.runId && (snapshot.state === 'preparing' || snapshot.state === 'running') ? (
@@ -94,7 +90,7 @@ export const ExecutionPanel = ({ sessionId, snapshot, onCancel }: ExecutionPanel
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-sand/70">아직 로그가 없습니다.</p>
+          <p className="text-sm text-sand/70">아직 실행 로그가 없습니다.</p>
         )}
       </div>
     </section>

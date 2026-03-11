@@ -13,7 +13,7 @@ export const SessionList = ({ sessions, selectedSessionId, onSelect }: SessionLi
     <div className="mb-4 flex items-center justify-between">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/45">세션</p>
-        <h3 className="font-display text-2xl text-ink">최근 녹화</h3>
+        <h3 className="font-display text-2xl text-ink">최근 세션</h3>
       </div>
       <span className="rounded-full bg-ink px-3 py-1 font-mono text-xs text-sand">{sessions.length}</span>
     </div>
@@ -21,7 +21,7 @@ export const SessionList = ({ sessions, selectedSessionId, onSelect }: SessionLi
     <div className="space-y-3">
       {sessions.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-ink/15 px-4 py-5 text-sm text-ink/60">
-          아직 세션이 없습니다. 녹화를 시작하면 타임라인이 채워집니다.
+          아직 기록한 세션이 없습니다.
         </div>
       ) : (
         sessions.map((session) => {

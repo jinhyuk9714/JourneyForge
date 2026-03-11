@@ -475,7 +475,7 @@ export const createFakeDesktopRuntime = ({
       setExecutionSnapshot({
         state: 'running',
       });
-      pushExecutionLog('system', `${sessionId} 세션의 ${target} 번들을 실행하는 중입니다.`);
+      pushExecutionLog('system', `${sessionId} 세션의 ${target === 'playwright' ? 'Playwright' : 'k6'} 번들을 실행하는 중입니다.`);
       pushExecutionLog('stdout', `${target} 출력: 번들이 준비되었습니다.`);
 
       if (mode === 'auto-success') {
@@ -501,7 +501,7 @@ export const createFakeDesktopRuntime = ({
       setExecutionSnapshot({
         state: 'preparing',
       });
-      pushExecutionLog('system', `${sessionId} 세션의 ${target} 번들을 준비하는 중입니다.`);
+      pushExecutionLog('system', `${sessionId} 세션의 ${target === 'playwright' ? 'Playwright' : 'k6'} 번들을 준비하는 중입니다.`);
       const runningTimer = setTimeout(finishRunning, 70);
       timerIds.push(runningTimer);
     }, 30);

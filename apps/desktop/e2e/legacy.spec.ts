@@ -14,8 +14,8 @@ test('legacy bundles render without explainability sections', async () => {
     await expect(page.getByTestId('journey-step-evidence-step-login')).toHaveCount(0);
     await expect(page.getByTestId('journey-api-evidence-step-search')).toHaveCount(0);
     await expect(page.getByTestId('journey-k6-evidence')).toHaveCount(0);
-    await expect(page.getByText('Why this step')).toHaveCount(0);
-    await expect(page.getByText('API evidence')).toHaveCount(0);
+    await expect(page.getByText('분류 근거')).toHaveCount(0);
+    await expect(page.getByText('API 근거')).toHaveCount(0);
   } finally {
     await runtime.close();
   }
