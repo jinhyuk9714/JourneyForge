@@ -132,6 +132,7 @@ const createFakeProcessRunner = (plans: FakePlan[]) => {
 describe('createExecutionService', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('exports a bundle and runs playwright with bootstrap commands and execution overrides', async () => {
@@ -212,6 +213,40 @@ describe('createExecutionService', () => {
 
     expect(service.getStatus().error).toContain('k6를 설치');
     expect(service.getStatus().logs.map((entry) => entry.message).join('\n')).toContain('k6 version');
+  });
+
+  it('augments packaged-app PATH values before spawning commands', async () => {
+    const dataDir = mkdtempSync(join(tmpdir(), 'journeyforge-execution-path-'));
+    const bundlePath = join(dataDir, 'exports', 'session-2b-bundle');
+    mkdirSync(join(bundlePath, 'k6'), { recursive: true });
+    const runner = createFakeProcessRunner([{ exitCode: 0, stdout: ['k6 v0.0.0'] }, { exitCode: 0, stdout: ['done'] }]);
+
+    const service = createExecutionService({
+      dataDir,
+      desktopApp: {
+        exportBundle: vi.fn().mockResolvedValue({ bundlePath, exportedPaths: [] }),
+        getSession: vi.fn().mockResolvedValue(buildBundle('session-2b')),
+        getSettings: vi.fn().mockResolvedValue(DEFAULT_SETTINGS),
+      },
+      credentialStore: {
+        getPlaywrightPassword: vi.fn(),
+        hasPlaywrightPassword: vi.fn().mockResolvedValue(false),
+      },
+      processRunner: runner,
+      buildEnv: (env) => ({
+        ...env,
+        PATH: '/usr/bin:/bin:/opt/homebrew/bin:/opt/homebrew/opt/node@22/bin',
+      }),
+    });
+
+    await service.start({ sessionId: 'session-2b', target: 'k6' });
+
+    await waitFor(() => {
+      expect(service.getStatus().state).toBe('succeeded');
+    });
+
+    expect(runner.calls[0]?.env.PATH).toContain('/opt/homebrew/bin');
+    expect(runner.calls[0]?.env.PATH).toContain('/opt/homebrew/opt/node@22/bin');
   });
 
   it('rejects duplicate starts and cancels an active playwright run', async () => {

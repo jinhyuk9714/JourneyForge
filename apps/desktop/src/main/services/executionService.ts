@@ -13,6 +13,7 @@ import type {
 } from '@journeyforge/shared';
 
 import { buildK6ExecutionPlan, buildPlaywrightExecutionPlan } from './executionBuilders';
+import { buildExecutionEnv } from './commandEnv';
 
 type ProcessOutput = {
   stream: 'stdout' | 'stderr';
@@ -48,6 +49,7 @@ type ExecutionServiceOptions = {
     getPlaywrightPassword(): Promise<string | null>;
   };
   processRunner?: ProcessRunner;
+  buildEnv?(env: Record<string, string>): Record<string, string>;
 };
 
 type ActiveExecution = {
@@ -81,10 +83,7 @@ const createProcessRunner = (): ProcessRunner => ({
   start(input) {
     const child = spawn(input.command, input.args, {
       cwd: input.cwd,
-      env: {
-        ...process.env,
-        ...input.env,
-      },
+      env: input.env,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
 
@@ -142,6 +141,7 @@ const browserInstallMarkerPath = (dataDir: string) => join(dataDir, 'execution',
 
 export const createExecutionService = (options: ExecutionServiceOptions) => {
   const processRunner = options.processRunner ?? createProcessRunner();
+  const buildEnv = options.buildEnv ?? buildExecutionEnv;
   let snapshot = createIdleSnapshot();
   let activeExecution: ActiveExecution | null = null;
   const listeners = new Set<(snapshot: ExecutionSnapshot) => void>();
@@ -282,7 +282,12 @@ export const createExecutionService = (options: ExecutionServiceOptions) => {
       command: command.command,
       args: command.args,
       cwd: command.cwd,
-      env: command.env,
+      env: buildEnv({
+        ...Object.fromEntries(
+          Object.entries(process.env).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+        ),
+        ...command.env,
+      }),
       onOutput: ({ stream, text }) => {
         pushLog(stream, text);
       },
