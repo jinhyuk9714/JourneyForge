@@ -1,6 +1,6 @@
 {
   "name": "@journeyforge/desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "브라우저 여정을 기록해 Playwright 테스트, API 흐름 문서, k6 초안을 생성하는 로컬 우선 데스크톱 앱",
   "type": "module",
