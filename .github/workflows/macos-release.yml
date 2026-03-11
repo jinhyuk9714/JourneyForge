@@ -104,6 +104,16 @@ jobs:
       - name: Install Playwright Chromium for repository verification
         run: pnpm install:browsers
 
+      - name: Install k6 for repository verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          if command -v k6 >/dev/null 2>&1; then
+            k6 version
+          else
+            brew install k6
+          fi
+
       - name: Run repository verification
         run: |
           set -euo pipefail
