@@ -1,7 +1,7 @@
 {
   "name": "journeyforge",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "브라우저 여정을 Playwright 테스트, API 흐름 문서, k6 초안으로 바꾸는 로컬 우선 워크스페이스",
   "packageManager": "pnpm@10.30.0",
   "scripts": {
